@@ -1,0 +1,30 @@
+# docker compose up -d      then open http://localhost:4000
+# Set the three secrets below (or put them in a .env file next to this one).
+services:
+  db:
+    image: mariadb:10.11
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?set DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: urbanresq
+    volumes: [dbdata:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      retries: 20
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db: { condition: service_healthy }
+    ports: ["4000:4000"]
+    environment:
+      DB_HOST: db
+      DB_USER: root
+      DB_PASS: ${DB_ROOT_PASSWORD}
+      DB_NAME: urbanresq
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET to a long random string}
+      SEED_PASSWORD: ${SEED_PASSWORD:?set SEED_PASSWORD (10+ chars) for the first sample accounts}
+      BACKUP_EVERY_HOURS: 12
+    volumes: [uploads:/app/uploads, backups:/app/backups]
+volumes: { dbdata: {}, uploads: {}, backups: {} }

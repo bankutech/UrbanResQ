@@ -1,0 +1,13 @@
+USE urbanresq;
+SELECT 'dashboard' AS t; SELECT * FROM v_dashboard;
+SELECT 'low stock' AS t; SELECT warehouse, resource, qty, min_qty FROM v_low_stock;
+SELECT 'alloc 1 from depot 1' AS t; CALL sp_allocate(1,1,2);
+SELECT request_id, resource_id, qty_requested, qty_allocated FROM resource_request_items WHERE request_id=1;
+SELECT batch_no, qty FROM stock_batches WHERE warehouse_id=1 AND resource_id IN (1,3);
+SELECT status FROM resource_requests WHERE request_id=1;
+SELECT 'alloc 1 from depot 2' AS t; CALL sp_allocate(1,2,2);
+SELECT status FROM resource_requests WHERE request_id=1;
+SELECT 'cancel alloc 2' AS t; CALL sp_cancel_allocation(2,2);
+SELECT status FROM resource_requests WHERE request_id=1;
+SELECT qty FROM stock_batches WHERE batch_no='B-2';
+SELECT 'audit' AS t; SELECT action, entity_id FROM audit_logs;

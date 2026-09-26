@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UrbanResQ — System Architecture & Database Schema</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #ffffff;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --accent: #0f766e;
+    --accent-light: #ccfbf1;
+    --section-bg: #f8fafc;
+    --table-header: #0f172a;
+    --critical: #dc2626;
+    --warning: #d97706;
+    --info: #2563eb;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    font-size: 11px;
+    line-height: 1.5;
+    padding: 40px;
+  }
+
+  @media print {
+    body { padding: 20px; font-size: 9px; }
+    .page-break { page-break-before: always; }
+    .no-print { display: none; }
+  }
+
+  /* Cover Page */
+  .cover {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 90vh;
+    text-align: center;
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 60px;
+  }
+  .cover-logo {
+    width: 80px; height: 80px;
+    background: var(--accent);
+    color: white;
+    font-size: 42px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    margin-bottom: 24px;
+  }
+  .cover h1 {
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+  }
+  .cover .subtitle {
+    font-size: 16px;
+    color: var(--muted);
+    font-weight: 400;
+    margin-bottom: 40px;
+  }
+  .cover .meta {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 2;
+  }
+  .cover .meta strong { color: var(--text); }
+
+  /* Section Headers */
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 40px 0 8px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--accent);
+    color: var(--accent);
+  }
+  h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 24px 0 8px;
+    color: var(--text);
+  }
+  h4 {
+    font-size: 12px;
+    font-weight: 600;
+    margin: 16px 0 6px;
+    color: var(--accent);
+  }
+
+  p { margin-bottom: 8px; color: var(--muted); }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 20px;
+    font-size: 10px;
+  }
+  th {
+    background: var(--table-header);
+    color: white;
+    padding: 6px 10px;
+    text-align: left;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 9px;
+  }
+  td {
+    padding: 5px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:nth-child(even) td { background: var(--section-bg); }
+  .col-name { font-family: 'JetBrains Mono', monospace; font-weight: 500; color: var(--text); white-space: nowrap; }
+  .col-type { font-family: 'JetBrains Mono', monospace; color: var(--info); font-size: 9px; }
+  .col-pk { color: var(--critical); font-weight: 600; font-size: 9px; }
+  .col-fk { color: var(--warning); font-size: 9px; }
+  .col-null { color: var(--muted); font-size: 9px; }
+
+  /* Workflow Diagram */
+  .workflow-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin: 20px 0;
+  }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .flow-box {
+    background: white;
+    border: 2px solid var(--accent);
+    border-radius: 10px;
+    padding: 12px 20px;
+    text-align: center;
+    min-width: 140px;
+    max-width: 200px;
+    position: relative;
+  }
+  .flow-box .title { font-weight: 700; font-size: 11px; color: var(--accent); }
+  .flow-box .desc { font-size: 9px; color: var(--muted); margin-top: 3px; }
+  .flow-box.critical { border-color: var(--critical); }
+  .flow-box.critical .title { color: var(--critical); }
+  .flow-box.warning { border-color: var(--warning); }
+  .flow-box.warning .title { color: var(--warning); }
+  .flow-box.info { border-color: var(--info); }
+  .flow-box.info .title { color: var(--info); }
+  .flow-box.dark { background: var(--table-header); border-color: var(--table-header); }
+  .flow-box.dark .title { color: white; }
+  .flow-box.dark .desc { color: #94a3b8; }
+  .flow-arrow {
+    font-size: 20px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .flow-arrow-down {
+    font-size: 20px;
+    color: var(--accent);
+    font-weight: 700;
+    margin: 6px 0;
+  }
+
+  /* ER Diagram */
+  .er-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 16px;
+    margin: 20px 0;
+  }
+  .er-table {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 9px;
+    break-inside: avoid;
+  }
+  .er-table-header {
+    background: var(--table-header);
+    color: white;
+    padding: 6px 10px;
+    font-weight: 700;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .er-table-body { padding: 0; }
+  .er-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 10px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .er-row:last-child { border-bottom: none; }
+  .er-row:nth-child(even) { background: var(--section-bg); }
+  .er-col-name { font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+  .er-col-type { font-family: 'JetBrains Mono', monospace; color: var(--muted); font-size: 8px; }
+  .er-pk { color: var(--critical); }
+  .er-fk { color: var(--warning); }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    gap: 20px;
+    margin: 12px 0;
+    font-size: 10px;
+    flex-wrap: wrap;
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+
+  /* Sections */
+  .section-group {
+    margin: 16px 0;
+    padding: 16px;
+    background: var(--section-bg);
+    border-radius: 8px;
+    border-left: 4px solid var(--accent);
+  }
+  .section-group h4 { margin-top: 0; }
+
+  /* TOC */
+  .toc { margin: 20px 0; }
+  .toc-item { padding: 4px 0; border-bottom: 1px dotted var(--border); display: flex; justify-content: space-between; }
+  .toc-item a { color: var(--accent); text-decoration: none; font-weight: 500; }
+
+  .tech-stack {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 12px 0;
+  }
+  .tech-item {
+    padding: 10px;
+    background: var(--section-bg);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+  .tech-item strong { display: block; margin-bottom: 2px; color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- ===================== COVER PAGE ===================== -->
+<div class="cover">
+  <div class="cover-logo">U</div>
+  <h1>UrbanResQ</h1>
+  <div class="subtitle">Intelligent Urban Disaster Resource Allocation Platform</div>
+  <div class="meta">
+    <strong>Document Type:</strong> System Architecture & Database Schema Reference<br>
+    <strong>Version:</strong> 1.0<br>
+    <strong>Database Engine:</strong> MySQL 8.0+ (InnoDB)<br>
+    <strong>Backend:</strong> Node.js / Express / TypeScript<br>
+    <strong>Frontend:</strong> React / TypeScript / Vite<br>
+    <strong>Generated:</strong> August 2026
+  </div>
+</div>
+
+<!-- ===================== TABLE OF CONTENTS ===================== -->
+<div class="page-break"></div>
+<h2>Table of Contents</h2>
+<div class="toc">
+  <div class="toc-item"><a href="#s1">1. System Overview</a></div>
+  <div class="toc-item"><a href="#s2">2. Technology Stack</a></div>
+  <div class="toc-item"><a href="#s3">3. Application Workflow Diagram</a></div>
+  <div class="toc-item"><a href="#s4">4. API Architecture</a></div>
+  <div class="toc-item"><a href="#s5">5. Allocation Engine Workflow</a></div>
+  <div class="toc-item"><a href="#s6">6. Database Schema — Entity Relationship Diagram</a></div>
+  <div class="toc-item"><a href="#s7">7. Table Definitions (Full Reference)</a></div>
+  <div class="toc-item"><a href="#s8">8. Stored Procedures</a></div>
+  <div class="toc-item"><a href="#s9">9. Views</a></div>
+</div>
+
+<!-- ===================== 1. SYSTEM OVERVIEW ===================== -->
+<h2 id="s1">1. System Overview</h2>
+<p>UrbanResQ is a full-stack decision-support platform for coordinating urban disaster response. It manages the complete lifecycle from disaster declaration through emergency request intake, intelligent resource allocation, rescue team dispatch, hospital/shelter management, and post-event analytics.</p>
+
+<h3>Core Capabilities</h3>
+<ul style="margin: 8px 0 16px 20px; color: var(--muted);">
+  <li><strong>Real-time Dashboard</strong> — live stats, charts, and activity feed for situational awareness</li>
+  <li><strong>Command Center</strong> — interactive disaster map with heatmaps, emergency queue, resource panel</li>
+  <li><strong>Allocation Engine</strong> — stored procedure that optimally matches resources to requests using priority scoring</li>
+  <li><strong>What-If Simulation</strong> — dry-run scenarios that don't affect production data</li>
+  <li><strong>Citizen Reporting</strong> — public-facing form with optional AI image assessment</li>
+  <li><strong>Drone Surveillance</strong> — live HUD overlay with detection bounding boxes</li>
+  <li><strong>RBAC Security</strong> — JWT tokens, 7 distinct roles, permission-based route guards</li>
+</ul>
+
+<!-- ===================== 2. TECH STACK ===================== -->
+<h2 id="s2">2. Technology Stack</h2>
+<div class="tech-stack">
+  <div class="tech-item"><strong>Frontend</strong>React 18, TypeScript, Vite, Tailwind CSS, Recharts, Leaflet Maps</div>
+  <div class="tech-item"><strong>Backend</strong>Node.js, Express, TypeScript, JWT (jsonwebtoken), bcryptjs, Zod validation</div>
+  <div class="tech-item"><strong>Database</strong>MySQL 8.0+ (InnoDB), stored procedures, views, triggers, computed columns</div>
+  <div class="tech-item"><strong>Real-time</strong>Socket.IO for live dashboard updates and notifications</div>
+</div>
+
+<!-- ===================== 3. WORKFLOW DIAGRAM ===================== -->
+<div class="page-break"></div>
+<h2 id="s3">3. Application Workflow Diagram</h2>
+<p>End-to-end flow from disaster event through resolution.</p>
+
+<div class="workflow-container">
+  <div class="flow-row">
+    <div class="flow-box critical">
+      <div class="title">🌊 Disaster Event</div>
+      <div class="desc">Flood, cyclone, earthquake, fire, etc.</div>
+    </div>
+  </div>
+  <div class="flow-arrow-down">↓</div>
+
+  <div class="flow-row">
+    <div class="flow-box dark">
+      <div class="title">📋 Disaster Created</div>
+      <div class="desc">Officer logs disaster with type, severity, location, affected population</div>
+    </div>
+    <div class="flow-arrow">←</div>
+    <div class="flow-box info">
+      <div class="title">📱 Citizen Reports</div>
+      <div class="desc">Public form with optional photo + AI damage assessment</div>
+    </div>
+  </div>
+  <div class="flow-arrow-down">↓</div>
+
+  <div class="flow-row">
+    <div class="flow-box">
+      <div class="title">🆘 Emergency Requests</div>
+      <div class="desc">Medical, rescue, water, food, evacuation — prioritized by urgency & vulnerability</div>
+    </div>
+  </div>
+  <div class="flow-arrow-down">↓</div>
+
+  <div class="flow-row">
+    <div class="flow-box warning">
+      <div class="title">⚙️ Allocation Engine</div>
+      <div class="desc">Stored procedure scores & matches resources to requests by priority, distance, availability</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <div class="title">🧪 Simulation Mode</div>
+      <div class="desc">Dry-run (p_dry_run=1) previews impact without committing</div>
+    </div>
+  </div>
+  <div class="flow-arrow-down">↓</div>
+
+  <div class="flow-row">
+    <div class="flow-box">
+      <div class="title">📦 Resource Allocation</div>
+      <div class="desc">Inventory decremented, status → DISPATCHED</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <div class="title">🚒 Team Dispatch</div>
+      <div class="desc">Rescue team assigned, vehicle deployed to location</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <div class="title">🏥 Hospital Admit</div>
+      <div class="desc">Patients routed to nearest available hospital beds</div>
+    </div>
+  </div>
+  <div class="flow-arrow-down">↓</div>
+
+  <div class="flow-row">
+    <div class="flow-box">
+      <div class="title">🏠 Shelter Check-in</div>
+      <div class="desc">Displaced residents registered at shelters</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <div class="title">🤝 Volunteer Assign</div>
+      <div class="desc">Volunteers matched to requests or shelters</div>
+    </div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box">
+      <div class="title">📧 Alert & Notify</div>
+      <div class="desc">Email alerts, in-app notifications, audit trail</div>
+    </div>
+  </div>
+  <div class="flow-arrow-down">↓</div>
+
+  <div class="flow-row">
+    <div class="flow-box dark">
+      <div class="title">✅ Resolution</div>
+      <div class="desc">Request resolved, resources returned, disaster status → CONTAINED → RESOLVED</div>
+    </div>
+  </div>
+  <div class="flow-arrow-down">↓</div>
+
+  <div class="flow-row">
+    <div class="flow-box info">
+      <div class="title">📊 Analytics & Reports</div>
+      <div class="desc">Response time, resolution rate, resource consumption trends, zone performance</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 4. API ARCHITECTURE ===================== -->
+<div class="page-break"></div>
+<h2 id="s4">4. API Architecture</h2>
+<p>All API routes are mounted under <code>/api</code> with JWT-based authentication.</p>
+
+<table>
+  <tr><th>Mount Point</th><th>Methods</th><th>Auth</th><th>Description</th></tr>
+  <tr><td class="col-name">/api/auth</td><td>POST</td><td>Public</td><td>Login, register, token refresh</td></tr>
+  <tr><td class="col-name">/api/public</td><td>POST</td><td>Public</td><td>Citizen emergency report (with image upload)</td></tr>
+  <tr><td class="col-name">/api/dashboard</td><td>GET</td><td>Auth</td><td>Aggregated stats, trends, severity, activity</td></tr>
+  <tr><td class="col-name">/api/disasters</td><td>CRUD</td><td>Auth + Role</td><td>Disaster lifecycle management</td></tr>
+  <tr><td class="col-name">/api/emergency-requests</td><td>CRUD</td><td>Auth + Role</td><td>Request intake, status updates, priority ranking</td></tr>
+  <tr><td class="col-name">/api/allocations</td><td>GET, POST</td><td>Auth + Role</td><td>View allocations, trigger engine run</td></tr>
+  <tr><td class="col-name">/api/resources</td><td>GET</td><td>Auth</td><td>Available resources with utilization</td></tr>
+  <tr><td class="col-name">/api/inventory</td><td>GET, POST</td><td>Auth + Role</td><td>Stock levels, manual adjustments</td></tr>
+  <tr><td class="col-name">/api/hospitals</td><td>GET, POST</td><td>Auth + Role</td><td>Hospital beds, patient admissions</td></tr>
+  <tr><td class="col-name">/api/shelters</td><td>GET, POST</td><td>Auth + Role</td><td>Shelter capacity, resident check-in</td></tr>
+  <tr><td class="col-name">/api/rescue-teams</td><td>GET</td><td>Auth</td><td>Team availability and specialization</td></tr>
+  <tr><td class="col-name">/api/vehicles</td><td>GET, POST</td><td>Auth + Role</td><td>Vehicle status, deployment to requests</td></tr>
+  <tr><td class="col-name">/api/volunteers</td><td>GET, POST</td><td>Auth + Role</td><td>Volunteer assignment and release</td></tr>
+  <tr><td class="col-name">/api/simulations</td><td>POST</td><td>Auth + Role</td><td>What-If scenario engine (dry run)</td></tr>
+  <tr><td class="col-name">/api/analytics</td><td>GET</td><td>Auth</td><td>Response performance, trends, zone analysis</td></tr>
+  <tr><td class="col-name">/api/audit-logs</td><td>GET</td><td>Auth + Admin</td><td>System-wide audit trail</td></tr>
+  <tr><td class="col-name">/api/search</td><td>GET</td><td>Auth</td><td>Full-text search across entities</td></tr>
+</table>
+
+<!-- ===================== 5. ALLOCATION ENGINE WORKFLOW ===================== -->
+<h2 id="s5">5. Allocation Engine Workflow</h2>
+<p>The allocation engine is a MySQL stored procedure (<code>sp_generate_resource_allocation_plan</code>) that serializes access via a named lock.</p>
+
+<div class="workflow-container">
+  <div class="flow-row">
+    <div class="flow-box dark">
+      <div class="title">1. Acquire Lock</div>
+      <div class="desc">GET_LOCK('allocation_engine_lock', 20) — serializes concurrent calls</div>
+    </div>
+  </div>
+  <div class="flow-arrow-down">↓</div>
+  <div class="flow-row">
+    <div class="flow-box">
+      <div class="title">2. Score Requests</div>
+      <div class="desc">Priority = f(urgency, vulnerability, wait_time, people_affected)</div>
+    </div>
+  </div>
+  <div class="flow-arrow-down">↓</div>
+  <div class="flow-row">
+    <div class="flow-box">
+      <div class="title">3. Match Resources</div>
+      <div class="desc">Nearest inventory with available stock, scored by distance + criticality</div>
+    </div>
+  </div>
+  <div class="flow-arrow-down">↓</div>
+  <div class="flow-row">
+    <div class="flow-box">
+      <div class="title">4. Dispatch Teams</div>
+      <div class="desc">Assign available rescue teams by specialization match</div>
+    </div>
+  </div>
+  <div class="flow-arrow-down">↓</div>
+  <div class="flow-row">
+    <div class="flow-box warning">
+      <div class="title">5. Detect Shortages</div>
+      <div class="desc">Flag resources that fall below min_threshold</div>
+    </div>
+  </div>
+  <div class="flow-arrow-down">↓</div>
+  <div class="flow-row">
+    <div class="flow-box dark">
+      <div class="title">6. Commit or Rollback</div>
+      <div class="desc">p_dry_run = 0 → COMMIT, p_dry_run = 1 → ROLLBACK (simulation)</div>
+    </div>
+  </div>
+  <div class="flow-arrow-down">↓</div>
+  <div class="flow-row">
+    <div class="flow-box">
+      <div class="title">7. Release Lock</div>
+      <div class="desc">RELEASE_LOCK('allocation_engine_lock')</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 6. ER DIAGRAM ===================== -->
+<div class="page-break"></div>
+<h2 id="s6">6. Database Schema — Entity Relationship Diagram</h2>
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background: var(--critical);"></div> Primary Key (PK)</div>
+  <div class="legend-item"><div class="legend-dot" style="background: var(--warning);"></div> Foreign Key (FK)</div>
+  <div class="legend-item"><div class="legend-dot" style="background: var(--info);"></div> Data Type</div>
+  <div class="legend-item"><div class="legend-dot" style="background: var(--muted);"></div> Nullable / Optional</div>
+</div>
+
+<h3>Identity & Access (4 tables)</h3>
+<div class="er-grid">
+  <div class="er-table">
+    <div class="er-table-header">users</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 user_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name">full_name</span><span class="er-col-type">VARCHAR(120)</span></div>
+      <div class="er-row"><span class="er-col-name">email</span><span class="er-col-type">VARCHAR(160) UQ</span></div>
+      <div class="er-row"><span class="er-col-name">password_hash</span><span class="er-col-type">VARCHAR(255)</span></div>
+      <div class="er-row"><span class="er-col-name">phone</span><span class="er-col-type">VARCHAR(20)</span></div>
+      <div class="er-row"><span class="er-col-name">designation</span><span class="er-col-type">VARCHAR(120)</span></div>
+      <div class="er-row"><span class="er-col-name">is_active</span><span class="er-col-type">TINYINT(1)</span></div>
+      <div class="er-row"><span class="er-col-name">last_login_at</span><span class="er-col-type">DATETIME</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">roles</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 role_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name">role_name</span><span class="er-col-type">VARCHAR(50) UQ</span></div>
+      <div class="er-row"><span class="er-col-name">description</span><span class="er-col-type">VARCHAR(255)</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">user_roles</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-fk">🔗 user_id</span><span class="er-col-type">FK → users</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 role_id</span><span class="er-col-type">FK → roles</span></div>
+      <div class="er-row"><span class="er-col-name">assigned_at</span><span class="er-col-type">DATETIME</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">permissions</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 permission_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name">permission_key</span><span class="er-col-type">VARCHAR(100) UQ</span></div>
+      <div class="er-row"><span class="er-col-name">description</span><span class="er-col-type">VARCHAR(255)</span></div>
+    </div>
+  </div>
+</div>
+
+<h3>Disasters & Emergency Requests (6 tables)</h3>
+<div class="er-grid">
+  <div class="er-table">
+    <div class="er-table-header">disasters</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 disaster_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name">disaster_type</span><span class="er-col-type">ENUM(10)</span></div>
+      <div class="er-row"><span class="er-col-name">title</span><span class="er-col-type">VARCHAR(180)</span></div>
+      <div class="er-row"><span class="er-col-name">severity</span><span class="er-col-type">ENUM(4)</span></div>
+      <div class="er-row"><span class="er-col-name">status</span><span class="er-col-type">ENUM(5)</span></div>
+      <div class="er-row"><span class="er-col-name">affected_population</span><span class="er-col-type">INT</span></div>
+      <div class="er-row"><span class="er-col-name">latitude, longitude</span><span class="er-col-type">DECIMAL(9,6)</span></div>
+      <div class="er-row"><span class="er-col-name">metadata</span><span class="er-col-type">JSON</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 created_by</span><span class="er-col-type">FK → users</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">disaster_zones</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 zone_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 disaster_id</span><span class="er-col-type">FK → disasters</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 location_id</span><span class="er-col-type">FK → locations</span></div>
+      <div class="er-row"><span class="er-col-name">zone_code</span><span class="er-col-type">VARCHAR(20)</span></div>
+      <div class="er-row"><span class="er-col-name">zone_name</span><span class="er-col-type">VARCHAR(120)</span></div>
+      <div class="er-row"><span class="er-col-name">severity</span><span class="er-col-type">ENUM(4)</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">emergency_requests</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 request_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 disaster_id</span><span class="er-col-type">FK → disasters</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 zone_id</span><span class="er-col-type">FK → zones</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 location_id</span><span class="er-col-type">FK → locations</span></div>
+      <div class="er-row"><span class="er-col-name">category</span><span class="er-col-type">ENUM(9)</span></div>
+      <div class="er-row"><span class="er-col-name">urgency</span><span class="er-col-type">ENUM(4)</span></div>
+      <div class="er-row"><span class="er-col-name">status</span><span class="er-col-type">ENUM(6)</span></div>
+      <div class="er-row"><span class="er-col-name">priority_score</span><span class="er-col-type">DECIMAL(6,2)</span></div>
+      <div class="er-row"><span class="er-col-name">people_affected</span><span class="er-col-type">INT</span></div>
+      <div class="er-row"><span class="er-col-name">ai_assessed</span><span class="er-col-type">BOOLEAN</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">citizens</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 citizen_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name">full_name</span><span class="er-col-type">VARCHAR(120)</span></div>
+      <div class="er-row"><span class="er-col-name">phone</span><span class="er-col-type">VARCHAR(20)</span></div>
+      <div class="er-row"><span class="er-col-name">vulnerable_group</span><span class="er-col-type">ENUM(6)</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">incidents</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 incident_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 disaster_id</span><span class="er-col-type">FK → disasters</span></div>
+      <div class="er-row"><span class="er-col-name">incident_type</span><span class="er-col-type">VARCHAR(100)</span></div>
+      <div class="er-row"><span class="er-col-name">severity, status</span><span class="er-col-type">ENUM</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">locations</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 location_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name">label</span><span class="er-col-type">VARCHAR(150)</span></div>
+      <div class="er-row"><span class="er-col-name">zone_name, city</span><span class="er-col-type">VARCHAR</span></div>
+      <div class="er-row"><span class="er-col-name">latitude, longitude</span><span class="er-col-type">DECIMAL(9,6)</span></div>
+    </div>
+  </div>
+</div>
+
+<h3>Resources & Allocations (6 tables)</h3>
+<div class="er-grid">
+  <div class="er-table">
+    <div class="er-table-header">resource_types</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 resource_type_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name">category</span><span class="er-col-type">ENUM(10)</span></div>
+      <div class="er-row"><span class="er-col-name">name</span><span class="er-col-type">VARCHAR(120)</span></div>
+      <div class="er-row"><span class="er-col-name">unit</span><span class="er-col-type">VARCHAR(20)</span></div>
+      <div class="er-row"><span class="er-col-name">is_critical</span><span class="er-col-type">TINYINT(1)</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">resource_inventory</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 inventory_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 resource_id</span><span class="er-col-type">FK → resources</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 location_id</span><span class="er-col-type">FK → locations</span></div>
+      <div class="er-row"><span class="er-col-name">total_quantity</span><span class="er-col-type">DECIMAL(12,2)</span></div>
+      <div class="er-row"><span class="er-col-name">available_quantity</span><span class="er-col-type">DECIMAL(12,2)</span></div>
+      <div class="er-row"><span class="er-col-name">allocated_quantity</span><span class="er-col-type">DECIMAL(12,2)</span></div>
+      <div class="er-row"><span class="er-col-name">min_threshold</span><span class="er-col-type">DECIMAL(12,2)</span></div>
+      <div class="er-row"><span class="er-col-name">is_below_threshold</span><span class="er-col-type">GENERATED</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">resource_allocations</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 allocation_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 request_id</span><span class="er-col-type">FK → requests</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 inventory_id</span><span class="er-col-type">FK → inventory</span></div>
+      <div class="er-row"><span class="er-col-name">quantity_allocated</span><span class="er-col-type">DECIMAL(12,2)</span></div>
+      <div class="er-row"><span class="er-col-name">allocation_score</span><span class="er-col-type">DECIMAL(6,2)</span></div>
+      <div class="er-row"><span class="er-col-name">status</span><span class="er-col-type">ENUM(5)</span></div>
+      <div class="er-row"><span class="er-col-name">distance_km</span><span class="er-col-type">DECIMAL(6,2)</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">resource_shortages</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 shortage_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 resource_type_id</span><span class="er-col-type">FK → types</span></div>
+      <div class="er-row"><span class="er-col-name">required_quantity</span><span class="er-col-type">DECIMAL(12,2)</span></div>
+      <div class="er-row"><span class="er-col-name">deficit</span><span class="er-col-type">GENERATED</span></div>
+      <div class="er-row"><span class="er-col-name">severity, status</span><span class="er-col-type">ENUM</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">resources</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 resource_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 resource_type_id</span><span class="er-col-type">FK → types</span></div>
+      <div class="er-row"><span class="er-col-name">resource_code</span><span class="er-col-type">VARCHAR(30) UQ</span></div>
+      <div class="er-row"><span class="er-col-name">name</span><span class="er-col-type">VARCHAR(150)</span></div>
+      <div class="er-row"><span class="er-col-name">is_consumable</span><span class="er-col-type">TINYINT(1)</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">resource_movements</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 movement_id</span><span class="er-col-type">BIGINT PK</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 inventory_id</span><span class="er-col-type">FK → inventory</span></div>
+      <div class="er-row"><span class="er-col-name">movement_type</span><span class="er-col-type">ENUM(6)</span></div>
+      <div class="er-row"><span class="er-col-name">quantity</span><span class="er-col-type">DECIMAL(12,2)</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="page-break"></div>
+<h3>Rescue Teams & Vehicles (5 tables)</h3>
+<div class="er-grid">
+  <div class="er-table">
+    <div class="er-table-header">rescue_teams</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 team_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name">team_code</span><span class="er-col-type">VARCHAR(20) UQ</span></div>
+      <div class="er-row"><span class="er-col-name">team_name</span><span class="er-col-type">VARCHAR(120)</span></div>
+      <div class="er-row"><span class="er-col-name">specialization</span><span class="er-col-type">ENUM(7)</span></div>
+      <div class="er-row"><span class="er-col-name">availability</span><span class="er-col-type">ENUM(3)</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 current_location_id</span><span class="er-col-type">FK → locations</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">vehicles</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 vehicle_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name">vehicle_code</span><span class="er-col-type">VARCHAR(20) UQ</span></div>
+      <div class="er-row"><span class="er-col-name">vehicle_type</span><span class="er-col-type">ENUM(6)</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 team_id</span><span class="er-col-type">FK → teams</span></div>
+      <div class="er-row"><span class="er-col-name">status</span><span class="er-col-type">ENUM(3)</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">personnel</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 personnel_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name">full_name</span><span class="er-col-type">VARCHAR(120)</span></div>
+      <div class="er-row"><span class="er-col-name">role</span><span class="er-col-type">VARCHAR(80)</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">team_members</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-fk">🔗 team_id</span><span class="er-col-type">FK → teams</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 personnel_id</span><span class="er-col-type">FK → personnel</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">vehicle_deployments</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 deployment_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 vehicle_id</span><span class="er-col-type">FK → vehicles</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 request_id</span><span class="er-col-type">FK → requests</span></div>
+      <div class="er-row"><span class="er-col-name">deployed_at</span><span class="er-col-type">DATETIME</span></div>
+    </div>
+  </div>
+</div>
+
+<h3>Hospitals & Shelters (6 tables)</h3>
+<div class="er-grid">
+  <div class="er-table">
+    <div class="er-table-header">hospitals</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 hospital_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name">name</span><span class="er-col-type">VARCHAR(150)</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 location_id</span><span class="er-col-type">FK → locations</span></div>
+      <div class="er-row"><span class="er-col-name">total_beds / available_beds</span><span class="er-col-type">INT</span></div>
+      <div class="er-row"><span class="er-col-name">icu_beds / available_icu</span><span class="er-col-type">INT</span></div>
+      <div class="er-row"><span class="er-col-name">blood_supply_level</span><span class="er-col-type">ENUM(4)</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">hospital_admissions</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 admission_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 hospital_id</span><span class="er-col-type">FK → hospitals</span></div>
+      <div class="er-row"><span class="er-col-name">patient_name</span><span class="er-col-type">VARCHAR(120)</span></div>
+      <div class="er-row"><span class="er-col-name">condition_severity</span><span class="er-col-type">ENUM(3)</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">shelters</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 shelter_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name">name</span><span class="er-col-type">VARCHAR(150)</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 location_id</span><span class="er-col-type">FK → locations</span></div>
+      <div class="er-row"><span class="er-col-name">max_capacity / current_occupancy</span><span class="er-col-type">INT</span></div>
+      <div class="er-row"><span class="er-col-name">food_supply / water_supply</span><span class="er-col-type">ENUM(4)</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">shelter_residents</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 resident_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 shelter_id</span><span class="er-col-type">FK → shelters</span></div>
+      <div class="er-row"><span class="er-col-name">full_name</span><span class="er-col-type">VARCHAR(120)</span></div>
+      <div class="er-row"><span class="er-col-name">checked_in/out</span><span class="er-col-type">DATETIME</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">hospital_beds</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 bed_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 hospital_id</span><span class="er-col-type">FK → hospitals</span></div>
+      <div class="er-row"><span class="er-col-name">bed_type</span><span class="er-col-type">ENUM(3)</span></div>
+      <div class="er-row"><span class="er-col-name">status</span><span class="er-col-type">ENUM(3)</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">shelter_capacity</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 capacity_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 shelter_id</span><span class="er-col-type">FK → shelters</span></div>
+      <div class="er-row"><span class="er-col-name">occupancy</span><span class="er-col-type">INT</span></div>
+      <div class="er-row"><span class="er-col-name">recorded_at</span><span class="er-col-type">DATETIME</span></div>
+    </div>
+  </div>
+</div>
+
+<h3>Suppliers, Volunteers & System (8 tables)</h3>
+<div class="er-grid">
+  <div class="er-table">
+    <div class="er-table-header">volunteers</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 volunteer_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name">full_name</span><span class="er-col-type">VARCHAR(120)</span></div>
+      <div class="er-row"><span class="er-col-name">skills</span><span class="er-col-type">VARCHAR(255)</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">suppliers</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 supplier_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name">name</span><span class="er-col-type">VARCHAR(150)</span></div>
+      <div class="er-row"><span class="er-col-name">category</span><span class="er-col-type">ENUM(6)</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">alerts</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 alert_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name">alert_type, severity</span><span class="er-col-type">VARCHAR / ENUM</span></div>
+      <div class="er-row"><span class="er-col-name">message</span><span class="er-col-type">VARCHAR(255)</span></div>
+      <div class="er-row"><span class="er-col-name">is_acknowledged</span><span class="er-col-type">TINYINT(1)</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">audit_logs</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 audit_id</span><span class="er-col-type">BIGINT PK</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 user_id</span><span class="er-col-type">FK → users</span></div>
+      <div class="er-row"><span class="er-col-name">action, entity_type</span><span class="er-col-type">VARCHAR</span></div>
+      <div class="er-row"><span class="er-col-name">old_value / new_value</span><span class="er-col-type">JSON</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">notifications</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 notification_id</span><span class="er-col-type">INT PK</span></div>
+      <div class="er-row"><span class="er-col-name er-fk">🔗 user_id</span><span class="er-col-type">FK → users</span></div>
+      <div class="er-row"><span class="er-col-name">title, message</span><span class="er-col-type">VARCHAR</span></div>
+    </div>
+  </div>
+  <div class="er-table">
+    <div class="er-table-header">system_settings</div>
+    <div class="er-table-body">
+      <div class="er-row"><span class="er-col-name er-pk">🔑 setting_key</span><span class="er-col-type">VARCHAR(80) PK</span></div>
+      <div class="er-row"><span class="er-col-name">setting_value</span><span class="er-col-type">VARCHAR(255)</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== 8. STORED PROCEDURES ===================== -->
+<div class="page-break"></div>
+<h2 id="s8">8. Stored Procedures</h2>
+
+<table>
+  <tr><th>Procedure</th><th>Parameters</th><th>Purpose</th></tr>
+  <tr>
+    <td class="col-name">sp_generate_resource_allocation_plan</td>
+    <td class="col-type">p_disaster_id INT, p_user_id INT, p_dry_run BOOLEAN</td>
+    <td>Core allocation engine. Scores pending requests by priority, matches nearest available resources, dispatches rescue teams, detects shortages, and either commits or rolls back (simulation mode).</td>
+  </tr>
+  <tr>
+    <td class="col-name">sp_admit_patient</td>
+    <td class="col-type">p_hospital_id, p_patient_name, p_condition, p_needs_icu, p_request_id</td>
+    <td>Admits a patient to the nearest available bed, auto-selects ICU if needed, decrements available bed counts.</td>
+  </tr>
+  <tr>
+    <td class="col-name">sp_check_in_resident</td>
+    <td class="col-type">p_shelter_id, p_full_name, p_citizen_id</td>
+    <td>Registers a displaced resident at a shelter, increments occupancy, enforces capacity constraints.</td>
+  </tr>
+</table>
+
+<!-- ===================== 9. VIEWS ===================== -->
+<h2 id="s9">9. Views</h2>
+
+<table>
+  <tr><th>View</th><th>Purpose</th></tr>
+  <tr><td class="col-name">vw_available_resources</td><td>Joins resource_types → resources → resource_inventory → locations. Computes stock_status (NORMAL / WARNING / CRITICAL) based on threshold.</td></tr>
+  <tr><td class="col-name">vw_resource_utilization</td><td>Calculates utilization_pct per resource type across all locations.</td></tr>
+  <tr><td class="col-name">vw_emergency_requests_live</td><td>Enriches emergency_requests with zone_name, location_label, disaster_title, and live_priority_score (time-decayed).</td></tr>
+  <tr><td class="col-name">vw_disaster_summary</td><td>Per-disaster aggregation: zone_count, total_requests, unresolved_requests, critical_requests, people_affected.</td></tr>
+</table>
+
+<div style="margin-top: 60px; padding-top: 20px; border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 10px;">
+  UrbanResQ v1.0 — System Architecture & Database Schema Reference — August 2026<br>
+  Total Tables: 35 &nbsp;|&nbsp; Views: 4 &nbsp;|&nbsp; Stored Procedures: 3 &nbsp;|&nbsp; API Endpoints: 17 route groups
+</div>
+
+</body>
+</html>
