@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Database, ChevronDown, ChevronUp, Terminal, ShieldCheck, Cpu, HardDrive } from 'lucide-react';
-import { Panel, PageHeader, StatCard, Button } from '../components/ui';
+import { Panel, PageHeader, StatCard } from '../components/ui';
 
 interface Feature {
   title: string;
@@ -26,10 +26,10 @@ FROM date_spine ds
 LEFT JOIN daily_counts dc ON dc.d = ds.d;`,
   },
   {
-    title: 'Window Functions (DENSE_RANK & PERCENTILE)',
+    title: 'Window Functions (DENSE_RANK & Haversine)',
     what: 'Partitioned analytic functions calculating relative order without collapsing rows.',
     why: 'Triage prioritization is inherently comparative. Determining whether an incident is top-priority within its zone requires relative rank against concurrent emergencies.',
-    useCase: '`vw_emergency_request_priority` ranks active calls per geographic zone; `vw_response_performance` calculates P90 response latencies.',
+    useCase: '`vw_emergency_request_priority` ranks active calls per geographic zone; `fn_haversine_km` computes radial distances for FIFO batch dispatch.',
     sql: `DENSE_RANK() OVER (
   PARTITION BY er.zone_id
   ORDER BY computed_priority_score DESC
@@ -78,7 +78,7 @@ export default function DatabaseIntelligencePage() {
     <div className="space-y-4 font-sans">
       <PageHeader
         title="MySQL 8.4 Enterprise Database Intelligence"
-        subtitle="Architectural transparency of the 55-table relational schema, atomic stored procedures, and FIFO triggers"
+        subtitle="Relational schema status, stored procedures, and trigger telemetry"
         freshness="MySQL 8.4 InnoDB ACID Engine"
       />
 
@@ -86,28 +86,28 @@ export default function DatabaseIntelligencePage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard 
           label="Relational Tables" 
-          value="55 TABLES" 
+          value="45 TABLES" 
           tone="info"
           icon={Database}
-          sub="Strict 3NF normalized"
+          sub="Strict 3NF normalized schema"
         />
         <StatCard 
           label="ACID Stored Procedures" 
-          value="12 PROCEDURES" 
+          value="2 PROCEDURES" 
           tone="normal"
           icon={Cpu}
-          sub="Atomic FIFO allocations"
+          sub="Atomic FIFO allocations & triage"
         />
         <StatCard 
           label="Automated Triggers" 
-          value="18 TRIGGERS" 
+          value="9 TRIGGERS" 
           tone="normal"
           icon={ShieldCheck}
-          sub="Shortage & audit automation"
+          sub="Bed surge & shortage alerts"
         />
         <StatCard 
           label="Aggregated Views" 
-          value="14 VIEWS" 
+          value="10 VIEWS" 
           tone="normal"
           icon={HardDrive}
           sub="Sub-5ms query optimization"

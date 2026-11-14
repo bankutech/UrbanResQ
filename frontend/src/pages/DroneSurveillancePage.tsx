@@ -22,6 +22,7 @@ export default function DroneSurveillancePage() {
   const [alt, setAlt] = useState(442);
   const [heading, setHeading] = useState(187);
   const [selectedDetection, setSelectedDetection] = useState<string | null>('target-1');
+  const [dispatchedTargetId, setDispatchedTargetId] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -115,7 +116,7 @@ export default function DroneSurveillancePage() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-red-600 animate-ping" />
-                    <span className="text-red-400 font-bold tracking-widest uppercase">LIVE STREAM · REC</span>
+                    <span className="text-red-400 font-bold tracking-widest uppercase">SIMULATED TELEMETRY · UAV-HAWK-04</span>
                     <span className="text-cyan-400 font-mono ml-2">UAV-HAWK-04</span>
                   </div>
                   <div className="text-[10px] text-slate-300">
@@ -260,12 +261,15 @@ export default function DroneSurveillancePage() {
                 </div>
 
                 <Button 
-                  variant="primary" 
+                  variant={dispatchedTargetId === activeTarget.id ? "secondary" : "primary"}
                   className="w-full mt-2"
-                  onClick={() => alert(`DISPATCH AUTHORIZED: Dispatched tactical responders to target ${activeTarget.id}`)}
+                  onClick={() => {
+                    setDispatchedTargetId(activeTarget.id);
+                    setTimeout(() => setDispatchedTargetId(null), 3000);
+                  }}
                 >
                   <Radio size={13} />
-                  <span>AUTHORIZE RAPID DISPATCH</span>
+                  <span>{dispatchedTargetId === activeTarget.id ? "✓ DISPATCH AUTHORIZED" : "AUTHORIZE RAPID DISPATCH"}</span>
                 </Button>
               </div>
             ) : (

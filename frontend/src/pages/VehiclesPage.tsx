@@ -1,22 +1,61 @@
-import React from 'react';
-import { Truck, CheckCircle2, Radio, Wrench, ShieldCheck } from 'lucide-react';
+import React, { useState } from 'react';
+import { Truck, CheckCircle2, Radio, Wrench, RotateCcw, AlertCircle } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch';
+import { api, apiErrorMessage } from '../api/client';
 import { DataTable } from '../components/DataTable';
-import { Panel, StatusBadge, PageHeader, StatCard, Button } from '../components/ui';
+import { Panel, StatusBadge, PageHeader, StatCard, Button, ErrorState } from '../components/ui';
+import { useAuth } from '../hooks/useAuth';
 
 export default function VehiclesPage() {
+  const { hasRole } = useAuth();
   const { data, loading, error, reload } = useFetch<any[]>('/vehicles');
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
+  const canManage = hasRole('EMERGENCY_MANAGER', 'RESCUE_COORDINATOR', 'ADMIN');
   const vehicles = data || [];
   const available = vehicles.filter((v) => v.status === 'AVAILABLE').length;
   const deployed = vehicles.filter((v) => v.status === 'DEPLOYED' || v.status === 'ASSIGNED').length;
   const maintenance = vehicles.filter((v) => v.status === 'MAINTENANCE').length;
 
+  async function handleReturn(vehicleId: string) {
+    setActionError(null);
+    setActionSuccess(null);
+    setUpdatingId(vehicleId);
+    try {
+      await api.post(`/vehicles/${vehicleId}/return`);
+      setActionSuccess(`Vehicle ${vehicleId} recalled to depot successfully.`);
+      setTimeout(() => setActionSuccess(null), 4000);
+      reload();
+    } catch (err) {
+      setActionError(apiErrorMessage(err));
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
+  async function handleSetStatus(vehicleId: string, status: string) {
+    setActionError(null);
+    setActionSuccess(null);
+    setUpdatingId(vehicleId);
+    try {
+      await api.patch(`/vehicles/${vehicleId}/status`, { status });
+      setActionSuccess(`Vehicle ${vehicleId} transitioned to ${status}.`);
+      setTimeout(() => setActionSuccess(null), 4000);
+      reload();
+    } catch (err) {
+      setActionError(apiErrorMessage(err));
+    } finally {
+      setUpdatingId(null);
+    }
+  }
+
   return (
     <div className="space-y-4 font-sans">
       <PageHeader
         title="Emergency Vehicle Fleet & Mobile Units"
-        subtitle="Operational status of ambulances, heavy fire tenders, flood evacuation boats, and logistical haulers"
+        subtitle="Fleet operational availability, mission deployments, and depot recovery"
         freshness="Fleet Telemetry Active"
         action={
           <Button variant="secondary" size="sm" onClick={reload}>
@@ -56,6 +95,18 @@ export default function VehiclesPage() {
           sub="Undergoing service"
         />
       </div>
+
+      {actionError && <ErrorState message={actionError} />}
+      {actionSuccess && (
+        <div 
+          role="status" 
+          aria-live="polite"
+          className="flex items-center gap-2 rounded-md border border-emerald-500/40 bg-emerald-950/40 px-3.5 py-2.5 text-xs font-mono text-emerald-300 shadow-tactical animate-fade-in"
+        >
+          <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+          <span>{actionSuccess}</span>
+        </div>
+      )}
 
       <Panel title="Municipal Fleet Registry">
         <DataTable
@@ -109,6 +160,55 @@ export default function VehiclesPage() {
               header: 'Operational Status', 
               render: (v: any) => <StatusBadge value={v.status} /> 
             },
+            {
+              header: 'Fleet Command Actions',
+              render: (v: any) => {
+                if (!canManage) {
+                  return <span className="text-[10px] font-mono text-eoc-subtle">—</span>;
+                }
+                const isBusy = updatingId === v.vehicle_id;
+                if (v.status === 'DEPLOYED' || v.status === 'ASSIGNED') {
+                  return (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      disabled={isBusy}
+                      onClick={() => handleReturn(v.vehicle_id)}
+                      className="text-cyan-400 hover:text-cyan-300"
+                    >
+                      <RotateCcw size={12} />
+                      Recall to Depot
+                    </Button>
+                  );
+                }
+                if (v.status === 'MAINTENANCE') {
+                  return (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={isBusy}
+                      onClick={() => handleSetStatus(v.vehicle_id, 'AVAILABLE')}
+                      className="text-emerald-400 hover:text-emerald-300 border border-emerald-500/30"
+                    >
+                      <CheckCircle2 size={12} />
+                      Return to Service
+                    </Button>
+                  );
+                }
+                return (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={isBusy}
+                    onClick={() => handleSetStatus(v.vehicle_id, 'MAINTENANCE')}
+                    className="text-amber-400 hover:text-amber-300 border border-amber-500/30"
+                  >
+                    <Wrench size={12} />
+                    Service Bay
+                  </Button>
+                );
+              }
+            }
           ]}
         />
       </Panel>

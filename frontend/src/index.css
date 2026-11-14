@@ -201,3 +201,34 @@ h1, h2, h3, h4, h5, h6, .font-display {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* ============================================================
+   TACTICAL RECHARTS TOOLTIPS & LEGENDS (HIGH CONTRAST)
+   ============================================================ */
+.recharts-default-tooltip {
+  background-color: #0c121e !important;
+  border: 1px solid rgba(6, 182, 212, 0.4) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.8) !important;
+  border-radius: 4px !important;
+  padding: 8px 12px !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+.recharts-tooltip-item,
+.recharts-tooltip-item-name,
+.recharts-tooltip-item-value,
+.recharts-tooltip-item-separator {
+  color: #38bdf8 !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+}
+
+.recharts-tooltip-label {
+  color: #f8fafc !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+  font-weight: 700 !important;
+  font-size: 11px !important;
+  margin-bottom: 4px !important;
+}

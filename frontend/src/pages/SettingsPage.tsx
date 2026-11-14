@@ -13,7 +13,7 @@ export default function SettingsPage() {
     <div className="space-y-4 font-sans">
       <PageHeader
         title="EOC Console System Settings & RBAC Governance"
-        subtitle="Active operator session credentials, visual telemetry modes, and role-based access control governance"
+        subtitle="Operator session security, preferences, and system settings"
         freshness="RBAC Governance Engine Active"
       />
 

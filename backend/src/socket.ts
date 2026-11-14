@@ -3,30 +3,47 @@ import { Server } from 'http';
 import { query } from './config/db';
 
 let io: SocketIOServer | null = null;
-let lastSeenAlertId = 0;
+let lastSeenAlertTime: Date = new Date();
+const seenAlertIds = new Set<string>();
 let pollingInterval: NodeJS.Timeout | null = null;
 
 const startAlertPolling = async () => {
   if (pollingInterval) return;
   
   try {
-    const initRes: any[] = await query('SELECT MAX(alert_id) as max_id FROM alerts');
-    lastSeenAlertId = initRes[0]?.max_id || 0;
+    const initRes: any[] = await query('SELECT MAX(created_at) as max_time FROM alerts');
+    if (initRes[0]?.max_time) {
+      lastSeenAlertTime = new Date(initRes[0].max_time);
+    }
   } catch (err) {
-    console.error('[Socket] Failed to get initial max alert_id:', err);
+    console.error('[Socket] Failed to get initial max alert time:', err);
   }
 
   pollingInterval = setInterval(async () => {
     if (!io) return;
     try {
       const newAlerts: any[] = await query(
-        'SELECT * FROM alerts WHERE alert_id > ? ORDER BY alert_id ASC', 
-        [lastSeenAlertId]
+        'SELECT * FROM alerts WHERE created_at >= ? ORDER BY created_at ASC', 
+        [lastSeenAlertTime]
       );
       
-      if (newAlerts.length > 0) {
-        lastSeenAlertId = newAlerts[newAlerts.length - 1].alert_id;
-        io.emit('new_alerts', newAlerts);
+      const freshAlerts = newAlerts.filter(a => !seenAlertIds.has(a.alert_id));
+
+      if (freshAlerts.length > 0) {
+        freshAlerts.forEach(a => {
+          seenAlertIds.add(a.alert_id);
+          if (seenAlertIds.size > 2000) {
+            const firstKey = seenAlertIds.values().next().value;
+            if (firstKey) seenAlertIds.delete(firstKey);
+          }
+        });
+
+        const latestTime = new Date(freshAlerts[freshAlerts.length - 1].created_at);
+        if (latestTime >= lastSeenAlertTime) {
+          lastSeenAlertTime = latestTime;
+        }
+
+        io.emit('new_alerts', freshAlerts);
       }
     } catch (err) {
       console.error('[Socket] Polling error:', err);

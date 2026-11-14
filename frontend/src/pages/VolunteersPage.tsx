@@ -42,7 +42,7 @@ export default function VolunteersPage() {
     <div className="space-y-4 font-sans">
       <PageHeader
         title="Volunteer Auxiliary Operations Roster"
-        subtitle="Civilian volunteer corps, specialized medical/logistical skills, and active emergency assignments"
+        subtitle="Volunteer roster, skill verifications, and camp assignments"
         freshness="Volunteer Roster Synchronized"
         action={
           <Button variant="secondary" size="sm" onClick={reload}>

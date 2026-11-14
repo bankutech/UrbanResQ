@@ -3,7 +3,12 @@ import jwt from 'jsonwebtoken';
 import { ApiError } from '../utils/asyncHandler';
 import { AuthUser, Role } from '../types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
+const isProduction = process.env.NODE_ENV === 'production';
+const JWT_SECRET = process.env.JWT_SECRET || (isProduction ? '' : 'dev-secret-change-me');
+
+if (isProduction && (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'dev-secret-change-me')) {
+  throw new Error('FATAL SECURITY CONFIGURATION: JWT_SECRET must be set to a secure, non-default value in production.');
+}
 
 /** Verifies the Bearer JWT and attaches the decoded user to req.user. */
 export function requireAuth(req: Request, _res: Response, next: NextFunction) {

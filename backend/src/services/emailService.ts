@@ -1,16 +1,30 @@
 import nodemailer from 'nodemailer';
 
-// Ethereal is a fake SMTP service, mostly aimed at Node.js developers.
 let transporter: nodemailer.Transporter | null = null;
+let etherealFailed = false;
 
-async function initTransporter() {
+async function initTransporter(): Promise<nodemailer.Transporter | null> {
   if (transporter) return transporter;
 
-  try {
-    // Generate test SMTP service account from ethereal.email
-    // Only needed if you don't have a real mail account for testing
-    const testAccount = await nodemailer.createTestAccount();
+  // 1. If custom SMTP configured via environment
+  if (process.env.SMTP_HOST) {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 587,
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: process.env.SMTP_USER ? {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS || '',
+      } : undefined,
+    });
+    return transporter;
+  }
 
+  // 2. If Ethereal already failed in this session, don't spam requests
+  if (etherealFailed) return null;
+
+  try {
+    const testAccount = await nodemailer.createTestAccount();
     transporter = nodemailer.createTransport({
       host: testAccount.smtp.host,
       port: testAccount.smtp.port,
@@ -20,30 +34,34 @@ async function initTransporter() {
         pass: testAccount.pass,
       },
     });
-
-    console.log('Ethereal Email Transporter Initialized:', testAccount.user);
+    console.log('[email] Ethereal Email Transporter Initialized:', testAccount.user);
     return transporter;
-  } catch (error) {
-    console.error('Failed to create Ethereal account:', error);
-    throw error;
+  } catch (error: any) {
+    etherealFailed = true;
+    console.warn('[email] SMTP offline/unavailable; notifications will log to console:', error?.message || error);
+    return null;
   }
 }
 
 export async function sendAlertEmail(to: string, subject: string, text: string, html?: string) {
   try {
     const t = await initTransporter();
+    if (!t) {
+      console.log(`[email:dry-run] To: ${to} | Subject: "${subject}" | Message: ${text}`);
+      return { messageId: `mock-${Date.now()}` };
+    }
+
     const info = await t.sendMail({
-      from: '"UrbanResq Alerts" <alerts@urbanresq.local>',
+      from: process.env.MAIL_FROM || '"UrbanResq Alerts" <alerts@urbanresq.local>',
       to,
       subject,
       text,
       html: html || text,
     });
 
-    console.log('Message sent: %s', info.messageId);
-    console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+    console.log('[email] Alert sent: %s', info.messageId);
     return info;
-  } catch (error) {
-    console.error('Error sending email:', error);
+  } catch (error: any) {
+    console.error('[email] Error sending email:', error?.message || error);
   }
 }

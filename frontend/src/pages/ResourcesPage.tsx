@@ -16,7 +16,7 @@ export default function ResourcesPage() {
     <div className="space-y-4 font-sans">
       <PageHeader
         title="Municipal Resource Catalog & Aggregated Stock"
-        subtitle="Catalog classification, depot distribution, and gross inventory allocation ratios"
+        subtitle="Resource types, master catalog, and allocation ratios"
         freshness="Resource Registry Active"
         action={
           <Button variant="secondary" size="sm" onClick={reload}>

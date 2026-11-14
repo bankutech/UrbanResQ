@@ -159,7 +159,12 @@ export default function AnalyticsPage() {
               </div>
 
               <button 
-                onClick={() => alert(`DECISION AUTHORIZED: ${rec.action}`)}
+                onClick={(e) => {
+                  const btn = e.currentTarget;
+                  btn.textContent = '✓ Action Queued';
+                  btn.classList.add('border-emerald-500', 'text-emerald-300', 'bg-emerald-950/60');
+                  setTimeout(() => { btn.textContent = rec.action; btn.classList.remove('border-emerald-500', 'text-emerald-300', 'bg-emerald-950/60'); }, 3000);
+                }}
                 className="mt-3.5 flex items-center justify-center gap-1.5 rounded border border-cyan-500/50 bg-cyan-950/80 px-2.5 py-1.5 text-[11px] font-bold text-cyan-300 hover:bg-cyan-900 transition-colors"
               >
                 <span>{rec.action}</span>

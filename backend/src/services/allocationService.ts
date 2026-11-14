@@ -50,8 +50,8 @@ export async function listAllocations(filters: { status?: string; requestId?: st
      FROM resource_allocations ra
      JOIN emergency_requests er ON er.request_id = ra.request_id
      LEFT JOIN resource_inventory ri ON ri.inventory_id = ra.inventory_id
-     LEFT JOIN resources r ON r.resource_id = ri.resource_id
-     LEFT JOIN resource_types rt ON rt.resource_type_id = r.resource_type_id
+
+     LEFT JOIN resource_types rt ON rt.resource_type_id = ri.resource_type_id
      LEFT JOIN locations l ON l.location_id = ri.location_id
      ${whereClause}
      ORDER BY ra.created_at DESC`,

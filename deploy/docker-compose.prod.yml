@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  # Isolated MySQL 8.4 Enterprise Database Engine
+  mysql:
+    image: mysql:8.4
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-UrbanResQ_SecureRootPass2026!}
+      MYSQL_DATABASE: urbanresq
+      MYSQL_USER: urbanresq_app
+      MYSQL_PASSWORD: ${DB_PASSWORD:-UrbanResQ_AppPassword2026!}
+    volumes:
+      - mysql_prod_data:/var/lib/mysql
+      - ../database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ../database/views.sql:/docker-entrypoint-initdb.d/02_views.sql:ro
+      - ../database/procedures.sql:/docker-entrypoint-initdb.d/03_procedures.sql:ro
+      - ../database/triggers.sql:/docker-entrypoint-initdb.d/04_triggers.sql:ro
+      - ../database/seed.sql:/docker-entrypoint-initdb.d/05_seed.sql:ro
+    networks:
+      - backend_internal
+    # No exposed host ports in production: database is isolated within private Docker network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "urbanresq_app", "--password=${DB_PASSWORD:-UrbanResQ_AppPassword2026!}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+
+  # UrbanResQ Node.js TypeScript API Backend
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: urbanresq_app
+      DB_PASSWORD: ${DB_PASSWORD:-UrbanResQ_AppPassword2026!}
+      DB_NAME: urbanresq
+      JWT_SECRET: ${JWT_SECRET:-ReplaceWith32PlusByteSecureRandomSecretKey2026}
+      CLIENT_URL: ${CLIENT_URL:-http://localhost}
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - backend_internal
+      - frontend_edge
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.5'
+
+  # Nginx Reverse Proxy & Static Asset Web Server
+  frontend:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../frontend/dist:/usr/share/nginx/html:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - frontend_edge
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '1.0'
+
+networks:
+  backend_internal:
+    internal: true # No external internet exposure for database
+  frontend_edge:
+    driver: bridge
+
+volumes:
+  mysql_prod_data:
+    driver: local

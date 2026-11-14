@@ -57,7 +57,7 @@ export default function InventoryPage() {
     <div className="space-y-4 font-sans">
       <PageHeader
         title="Municipal Resource Inventory & Depots"
-        subtitle="Stock levels, minimum safety thresholds, and replenishment pipelines across all city depots"
+        subtitle="Depot stock balances, minimum thresholds, and replenishment pipelines"
         freshness="Live MySQL Inventory State"
         action={
           <div className="flex items-center gap-2">

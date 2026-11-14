@@ -31,6 +31,12 @@ inventoryRouter.post('/:id/adjust', requireRole('RESOURCE_MANAGER'), asyncHandle
 export const hospitalRouter = Router();
 hospitalRouter.use(requireAuth);
 hospitalRouter.get('/', asyncHandler(async (_req, res) => res.json(await facilityService.listHospitals())));
+hospitalRouter.get('/admissions', asyncHandler(async (req, res) => {
+  res.json(await facilityService.listHospitalAdmissions(req.query.hospitalId as string | undefined));
+}));
+hospitalRouter.post('/admissions/:id/discharge', requireRole('MEDICAL_COORDINATOR', 'EMERGENCY_MANAGER', 'ADMIN'), asyncHandler(async (req, res) => {
+  res.json(await facilityService.dischargePatient(req.params.id));
+}));
 hospitalRouter.post('/admit', requireRole('MEDICAL_COORDINATOR', 'EMERGENCY_MANAGER'), asyncHandler(async (req, res) => {
   const schema = z.object({
     hospitalId: z.string(), requestId: z.string().optional(), patientName: z.string().min(2),
@@ -48,6 +54,12 @@ hospitalRouter.post('/admit', requireRole('MEDICAL_COORDINATOR', 'EMERGENCY_MANA
 export const shelterRouter = Router();
 shelterRouter.use(requireAuth);
 shelterRouter.get('/', asyncHandler(async (_req, res) => res.json(await facilityService.listShelters())));
+shelterRouter.get('/residents', asyncHandler(async (req, res) => {
+  res.json(await facilityService.listShelterResidents(req.query.shelterId as string | undefined));
+}));
+shelterRouter.post('/residents/:id/checkout', requireRole('EMERGENCY_MANAGER', 'DISASTER_OFFICER', 'ADMIN'), asyncHandler(async (req, res) => {
+  res.json(await facilityService.checkOutResident(req.params.id));
+}));
 shelterRouter.post('/:id/check-in', requireRole('EMERGENCY_MANAGER', 'DISASTER_OFFICER', 'MEDICAL_COORDINATOR'), asyncHandler(async (req, res) => {
   const schema = z.object({ fullName: z.string().min(2), citizenId: z.string().optional() });
   const parsed = schema.safeParse(req.body);
@@ -75,6 +87,15 @@ vehicleRouter.post('/:id/deploy', requireRole('EMERGENCY_MANAGER', 'RESCUE_COORD
   const parsed = schema.safeParse(req.body);
   if (!parsed.success) throw new ApiError(400, 'VALIDATION_ERROR', parsed.error.issues[0].message);
   res.json(await facilityService.deployVehicle(req.params.id, parsed.data.requestId, req.user!.userId));
+}));
+vehicleRouter.post('/:id/return', requireRole('EMERGENCY_MANAGER', 'RESCUE_COORDINATOR', 'ADMIN'), asyncHandler(async (req, res) => {
+  res.json(await facilityService.returnVehicle(req.params.id));
+}));
+vehicleRouter.patch('/:id/status', requireRole('EMERGENCY_MANAGER', 'RESCUE_COORDINATOR', 'ADMIN'), asyncHandler(async (req, res) => {
+  const schema = z.object({ status: z.string() });
+  const parsed = schema.safeParse(req.body);
+  if (!parsed.success) throw new ApiError(400, 'VALIDATION_ERROR', parsed.error.issues[0].message);
+  res.json(await facilityService.updateVehicleStatus(req.params.id, parsed.data.status));
 }));
 
 export const shortageRouter = Router();

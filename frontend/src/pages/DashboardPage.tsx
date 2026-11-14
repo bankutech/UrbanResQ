@@ -38,6 +38,28 @@ import {
   Button
 } from "../components/ui";
 
+
+const TacticalSeverityTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    const count = Number(data.value) || 0;
+    const color = data.payload?.fill || SEVERITY_COLORS[data.name] || '#06B6D4';
+    return (
+      <div className="border border-cyan-500/50 bg-[#0C121E]/95 px-3 py-2 shadow-2xl backdrop-blur-md font-mono text-xs">
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 rounded-full shadow-[0_0_8px]" style={{ backgroundColor: color }} />
+          <span className="font-bold tracking-wider text-white uppercase">{data.name} SEVERITY</span>
+        </div>
+        <div className="mt-1 flex items-baseline gap-2">
+          <span className="text-base font-black text-cyan-400 tabular-nums">{count}</span>
+          <span className="text-[10px] text-slate-300">Declared Incidents</span>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 const SEVERITY_COLORS: Record<string, string> = {
   CRITICAL: "#EF4444",
   HIGH: "#F97316",
@@ -210,37 +232,50 @@ export default function DashboardPage() {
           {loading ? (
             <Skeleton className="h-64" />
           ) : (
-            <ResponsiveContainer width="100%" height={260}>
-              <PieChart>
-                <Pie
-                  data={severity}
-                  dataKey="disaster_count"
-                  nameKey="severity"
-                  innerRadius={55}
-                  outerRadius={85}
-                  paddingAngle={3}
-                >
-                  {severity.map((s: any, i: number) => (
-                    <Cell
-                      key={i}
-                      fill={SEVERITY_COLORS[s.severity] || "#94A3B8"}
-                      stroke="#090D16"
-                      strokeWidth={2}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{
-                    background: "#0F1623",
-                    border: "1px solid rgba(148, 163, 184, 0.2)",
-                    borderRadius: 4,
-                    fontSize: 11,
-                    color: "#F8FAFC",
-                    fontFamily: 'monospace'
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="flex flex-col">
+              <div className="relative flex items-center justify-center">
+                <ResponsiveContainer width="100%" height={210}>
+                  <PieChart>
+                    <Pie
+                      data={severity}
+                      dataKey="disaster_count"
+                      nameKey="severity"
+                      innerRadius={55}
+                      outerRadius={82}
+                      paddingAngle={4}
+                    >
+                      {severity.map((s: any, i: number) => (
+                        <Cell
+                          key={i}
+                          fill={SEVERITY_COLORS[s.severity] || "#94A3B8"}
+                          stroke="#090D16"
+                          strokeWidth={2}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<TacticalSeverityTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span className="text-2xl font-black font-mono text-white tabular-nums tracking-tight">
+                    {(severity || []).reduce((acc: number, curr: any) => acc + (Number(curr.disaster_count) || 0), 0)}
+                  </span>
+                  <span className="text-[9px] font-mono uppercase tracking-wider text-cyan-400 font-semibold">
+                    Incidents
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-2 flex flex-wrap items-center justify-center gap-2 font-mono text-[11px] pt-2 border-t border-slate-800/60">
+                {(severity || []).map((s: any) => (
+                  <div key={s.severity} className="flex items-center gap-1.5 px-2 py-0.5 border border-slate-800/80 bg-[#0A0E17]/80">
+                    <span className="h-2 w-2 rounded-full" style={{ backgroundColor: SEVERITY_COLORS[s.severity] || '#94A3B8' }} />
+                    <span className="text-slate-300 font-medium text-[10px]">{s.severity}</span>
+                    <span className="text-white font-bold text-[10px] tabular-nums">({s.disaster_count})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </Panel>
       </div>

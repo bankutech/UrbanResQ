@@ -32,6 +32,25 @@ export default function AllocationsPage() {
   const allocations = data || [];
 
   const canManage = hasRole('EMERGENCY_MANAGER', 'RESOURCE_MANAGER');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [engineSummary, setEngineSummary] = useState<string | null>(null);
+
+  async function handleRunEngine(dryRun: boolean) {
+    setIsGenerating(true);
+    setActionError(null);
+    setEngineSummary(null);
+    try {
+      const res = await api.post('/allocations/generate', { dryRun });
+      const { plan, shortages } = res.data;
+      const msg = `Engine Execution: ${plan?.length || 0} allocation(s) generated, ${shortages?.length || 0} shortage(s) recorded.`;
+      setEngineSummary(msg);
+      reload();
+    } catch (err) {
+      setActionError(apiErrorMessage(err));
+    } finally {
+      setIsGenerating(false);
+    }
+  }
 
   async function updateStatus(id: string, newStatus: string) {
     setActionError(null);
@@ -59,7 +78,7 @@ export default function AllocationsPage() {
     <div className="space-y-4 font-sans">
       <PageHeader
         title="FIFO Resource Allocations & Dispatch"
-        subtitle="ACID transactional allocation engine powered by MySQL stored procedures with FIFO batch expiry dispatch"
+        subtitle="FIFO batch allocation and dispatch telemetry across active disaster sectors"
         freshness="Live Stored Procedure Engine Active"
         action={
           <div className="flex items-center gap-2">
@@ -75,6 +94,18 @@ export default function AllocationsPage() {
             <Button variant="secondary" size="sm" onClick={reload}>
               SYNC
             </Button>
+            {canManage && (
+              <Button 
+                variant="primary" 
+                size="sm" 
+                disabled={isGenerating}
+                onClick={() => handleRunEngine(false)}
+                className="bg-cyan-600 hover:bg-cyan-500 font-mono text-xs flex items-center gap-1.5"
+              >
+                <Sparkles size={13} className={isGenerating ? "animate-spin" : ""} />
+                {isGenerating ? "OPTIMIZING..." : "RUN BATCH ENGINE"}
+              </Button>
+            )}
           </div>
         }
       />
@@ -112,6 +143,21 @@ export default function AllocationsPage() {
       </div>
 
       {actionError && <ErrorState message={actionError} />}
+      {engineSummary && (
+        <div className="flex items-center justify-between p-3 rounded border border-cyan-500/40 bg-cyan-950/40 text-cyan-300 font-mono text-xs">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={16} className="text-cyan-400 shrink-0" />
+            <span>{engineSummary}</span>
+          </div>
+          <button 
+            onClick={() => setEngineSummary(null)} 
+            className="text-cyan-400/60 hover:text-cyan-200 px-1.5 py-0.5 text-xs font-bold"
+            aria-label="Dismiss summary"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* FIFO Batch Expiry Reservation Visualizer */}
       <Panel 
@@ -196,14 +242,13 @@ export default function AllocationsPage() {
             </div>
           </div>
         ) : (
-          <div className="p-3 rounded border border-cyan-500/30 bg-cyan-950/20 font-mono text-xs text-cyan-200 space-y-2">
-            <div className="font-bold flex items-center gap-1.5 text-cyan-300">
-              <ShieldCheck size={14} />
-              <span>ATOMIC STORED PROCEDURE: `sp_generate_resource_allocation_plan`</span>
+          <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded border border-slate-800 bg-[#0A0E17] font-mono text-xs">
+            <div className="flex items-center gap-2 text-cyan-400">
+              <ShieldCheck size={14} className="shrink-0 text-cyan-400" />
+              <span className="font-semibold text-slate-200">FIFO Expiry Protocol Active:</span>
+              <span className="text-slate-400 text-[11px]">Oldest verified inventory batches reserved first to prevent supply expiry</span>
             </div>
-            <p className="text-[11px] leading-relaxed text-slate-300">
-              Allocation calculations execute within an isolated MySQL 8.4 transaction with row-level locks (<code className="text-cyan-300">FOR UPDATE</code>). Stock batches are queried strictly ordered by <code className="text-cyan-300">expiry_date IS NULL, expiry_date ASC</code> ensuring oldest verified inventory batches are depleted first, preventing critical medical or food waste during multi-day crisis operations.
-            </p>
+            <span className="text-[10px] text-emerald-400 border border-emerald-500/30 bg-emerald-950/40 px-2 py-0.5 font-bold uppercase tracking-wider">Engine Ready</span>
           </div>
         )}
       </Panel>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { MapPin, Navigation, CheckCircle2, AlertCircle } from 'lucide-react';
 import { api } from '../api/client';
 
 export const CitizenReportApp: React.FC = () => {
@@ -7,8 +8,8 @@ export const CitizenReportApp: React.FC = () => {
     description: '',
     category: 'RESCUE',
     urgency: 'MEDIUM',
-    zone_id: '5d7af07d-c950-11f1-ab19-3822e20f83b9', // Adyar Riverbank
-    latitude: '13.0827', // Chennai Metropolitan Region
+    zone_id: '',
+    latitude: '13.0827', // Default Chennai Regional Center
     longitude: '80.2707',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -16,6 +17,8 @@ export const CitizenReportApp: React.FC = () => {
   const [loadingMessage, setLoadingMessage] = useState('Submitting...');
   const [successResult, setSuccessResult] = useState<any | null>(null);
   const [error, setError] = useState('');
+  const [locating, setLocating] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -25,6 +28,31 @@ export const CitizenReportApp: React.FC = () => {
     if (e.target.files && e.target.files.length > 0) {
       setImageFile(e.target.files[0]);
     }
+  };
+
+  const handleDetectGPS = () => {
+    if (!navigator.geolocation) {
+      setLocationStatus('Geolocation not supported on this browser');
+      return;
+    }
+    setLocating(true);
+    setLocationStatus('Acquiring high-precision GPS lock...');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setFormData((prev) => ({
+          ...prev,
+          latitude: pos.coords.latitude.toFixed(6),
+          longitude: pos.coords.longitude.toFixed(6),
+        }));
+        setLocating(false);
+        setLocationStatus(`GPS locked (±${Math.round(pos.coords.accuracy)}m)`);
+      },
+      (err) => {
+        setLocating(false);
+        setLocationStatus(`GPS unavailable: ${err.message}. Using baseline.`);
+      },
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,7 +70,7 @@ export const CitizenReportApp: React.FC = () => {
     try {
       const formPayload = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
-        formPayload.append(key, value);
+        if (value) formPayload.append(key, value);
       });
       if (imageFile) {
         formPayload.append('image', imageFile);
@@ -57,7 +85,7 @@ export const CitizenReportApp: React.FC = () => {
         description: '',
         category: 'RESCUE',
         urgency: 'MEDIUM',
-        zone_id: '5d7af07d-c950-11f1-ab19-3822e20f83b9',
+        zone_id: '',
         latitude: '13.0827',
         longitude: '80.2707',
       });
@@ -86,9 +114,9 @@ export const CitizenReportApp: React.FC = () => {
         <div className="absolute -top-[300px] left-1/2 -translate-x-1/2 h-[600px] w-[800px] rounded-[100%] bg-red-600/10 blur-[120px]" />
       </div>
 
-      {/* Sleek Scanner / Radar (Red Theme) */}
+      {/* Scanner Radar - supports reduced motion */}
       <div className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 h-[700px] w-[700px] opacity-[0.25] mix-blend-screen z-0">
-        <svg viewBox="0 0 400 400" className="h-full w-full animate-[spin_60s_linear_infinite]">
+        <svg viewBox="0 0 400 400" className="h-full w-full animate-[spin_60s_linear_infinite] motion-reduce:animate-none">
           <defs>
             <radialGradient id="rzpSweepRed" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stopColor="#ef4444" stopOpacity="0.4" />
@@ -113,26 +141,22 @@ export const CitizenReportApp: React.FC = () => {
             
             <h1 className="font-display text-2xl font-semibold tracking-tight text-white mb-1">Emergency Report</h1>
             <p className="text-[13px] text-gray-400 mb-6">Please provide details about the emergency. Help will be dispatched as soon as possible.</p>
-            
-            {successResult && (
-              <div className="mb-6 p-4 bg-green-500/10 text-green-400 rounded border border-green-500/30">
-                <strong className="block mb-1">Success! Your report has been submitted.</strong>
-                {successResult.ai_assessed && (
-                  <div className="mt-2 text-sm bg-black/50 p-3 rounded shadow-sm border border-green-500/20">
-                    <span className="font-semibold text-gray-200">🤖 AI Assessment Complete:</span><br/>
-                    <span className="block mt-1 italic text-gray-400">"{successResult.ai_notes}"</span>
-                    <div className="mt-2 flex gap-2">
-                      <span className="bg-red-500/20 text-red-400 border border-red-500/30 px-2 py-0.5 rounded font-mono text-xs">Urgency: {successResult.urgency}</span>
-                      <span className="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded font-mono text-xs">Category: {successResult.category}</span>
-                    </div>
-                  </div>
-                )}
+
+            {error && (
+              <div className="mb-4 rounded-md border border-red-500/20 bg-red-500/10 p-3 text-xs text-red-400">
+                {error}
               </div>
             )}
 
-            {error && (
-              <div className="mb-4 p-4 bg-red-500/10 text-red-400 rounded border border-red-500/30">
-                {error}
+            {successResult && (
+              <div className="mb-4 rounded-md border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-400">
+                <div className="font-semibold mb-1">Report Dispatched Successfully!</div>
+                <div>ID: {successResult.request_id}</div>
+                {successResult.ai_assessed && (
+                  <div className="mt-2 text-[11px] text-emerald-300">
+                    <span className="font-bold">AI Assessment:</span> {successResult.ai_notes}
+                  </div>
+                )}
               </div>
             )}
 
@@ -145,45 +169,88 @@ export const CitizenReportApp: React.FC = () => {
                     name="title"
                     value={formData.title}
                     onChange={handleChange}
-                    className="w-full bg-transparent px-4 py-3 text-sm text-gray-100 placeholder:text-gray-600 outline-none" 
-                    placeholder="e.g. Building Fire on 5th Ave" 
+                    className="w-full bg-transparent px-4 py-3 text-sm text-gray-100 placeholder:text-gray-600 outline-none"
+                    placeholder="e.g. Flash Flood Trapped Resident"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="font-mono text-[10px] font-medium uppercase tracking-widest text-gray-400">Category</label>
-                <div className="relative overflow-hidden rounded-md border border-white/[0.1] bg-[#111] transition-colors duration-200 focus-within:border-red-500">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="font-mono text-[10px] font-medium uppercase tracking-widest text-gray-400">Category</label>
                   <select 
                     name="category"
                     value={formData.category}
                     onChange={handleChange}
-                    className="w-full bg-transparent px-4 py-3 text-sm text-gray-100 outline-none appearance-none"
+                    className="w-full rounded-md border border-white/[0.1] bg-[#111] px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-red-500"
                   >
-                    <option value="RESCUE" className="bg-[#111]">Rescue / Fire / Structural</option>
+                    <option value="RESCUE" className="bg-[#111]">Rescue Operations</option>
                     <option value="MEDICAL" className="bg-[#111]">Medical Emergency</option>
-                    <option value="SECURITY" className="bg-[#111]">Police / Security</option>
-                    <option value="EVACUATION" className="bg-[#111]">Evacuation</option>
-                    <option value="OTHER" className="bg-[#111]">Other</option>
+                    <option value="WATER" className="bg-[#111]">Drinking Water</option>
+                    <option value="FOOD" className="bg-[#111]">Food Rations</option>
+                    <option value="SHELTER" className="bg-[#111]">Shelter Requirement</option>
+                    <option value="EVACUATION" className="bg-[#111]">Evacuation Transport</option>
+                    <option value="SUPPLIES" className="bg-[#111]">Emergency Supplies</option>
+                    <option value="SECURITY" className="bg-[#111]">Security Threat</option>
+                    <option value="OTHER" className="bg-[#111]">Other Distress</option>
                   </select>
                 </div>
-              </div>
 
-              <div className="space-y-1.5">
-                <label className="font-mono text-[10px] font-medium uppercase tracking-widest text-gray-400">Urgency</label>
-                <div className="relative overflow-hidden rounded-md border border-white/[0.1] bg-[#111] transition-colors duration-200 focus-within:border-red-500">
+                <div className="space-y-1.5">
+                  <label className="font-mono text-[10px] font-medium uppercase tracking-widest text-gray-400">Urgency Level</label>
                   <select 
                     name="urgency"
                     value={formData.urgency}
                     onChange={handleChange}
-                    className="w-full bg-transparent px-4 py-3 text-sm text-gray-100 outline-none appearance-none"
+                    className="w-full rounded-md border border-white/[0.1] bg-[#111] px-3 py-2.5 text-xs text-gray-200 outline-none focus:border-red-500"
                   >
                     <option value="LOW" className="bg-[#111]">Low - Needs attention soon</option>
-                    <option value="MEDIUM" className="bg-[#111]">Medium - Immediate but not life-threatening</option>
-                    <option value="HIGH" className="bg-[#111]">High - Life-threatening emergency</option>
-                    <option value="CRITICAL" className="bg-[#111]">Critical - Mass casualty or severe threat</option>
+                    <option value="MEDIUM" className="bg-[#111]">Medium - Immediate non-fatal</option>
+                    <option value="HIGH" className="bg-[#111]">High - Life-threatening</option>
+                    <option value="CRITICAL" className="bg-[#111]">Critical - Severe casualty risk</option>
                   </select>
                 </div>
+              </div>
+
+              {/* GPS Coordinates & Auto-Detection */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="font-mono text-[10px] font-medium uppercase tracking-widest text-gray-400">Incident Location</label>
+                  <button
+                    type="button"
+                    onClick={handleDetectGPS}
+                    disabled={locating}
+                    className="text-[11px] font-mono text-cyan-400 hover:text-cyan-300 flex items-center gap-1 transition-colors disabled:opacity-50"
+                  >
+                    <Navigation size={11} className={locating ? 'animate-spin' : ''} />
+                    <span>{locating ? 'Locating...' : 'Detect My GPS'}</span>
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    name="latitude"
+                    value={formData.latitude}
+                    onChange={handleChange}
+                    placeholder="Latitude"
+                    className="w-full rounded-md border border-white/[0.1] bg-[#111] px-3 py-2 text-xs text-gray-200 font-mono outline-none focus:border-red-500"
+                    required
+                  />
+                  <input
+                    type="text"
+                    name="longitude"
+                    value={formData.longitude}
+                    onChange={handleChange}
+                    placeholder="Longitude"
+                    className="w-full rounded-md border border-white/[0.1] bg-[#111] px-3 py-2 text-xs text-gray-200 font-mono outline-none focus:border-red-500"
+                    required
+                  />
+                </div>
+                {locationStatus && (
+                  <div className="text-[10px] font-mono text-cyan-400/80 mt-0.5">
+                    {locationStatus}
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -218,7 +285,7 @@ export const CitizenReportApp: React.FC = () => {
               <button 
                 type="submit" 
                 disabled={loading}
-                className={`group relative flex w-full items-center justify-center gap-2 rounded-md bg-red-600 px-4 py-3 text-[14px] font-bold text-white transition-all hover:bg-red-700 active:scale-[0.98] disabled:opacity-70 mt-4 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                className={`group relative flex w-full items-center justify-center gap-2 rounded-md bg-red-600 px-4 py-3 min-h-[44px] text-[14px] font-bold text-white transition-all hover:bg-red-700 active:scale-[0.98] disabled:opacity-70 mt-4 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
                 {loading && (
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

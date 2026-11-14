@@ -314,6 +314,8 @@ export const StatCard = memo(function StatCard({
   const toneCls = STAT_TONES[tone] || STAT_TONES.default;
   return (
     <div
+      role="region"
+      aria-label={`${label}: ${typeof value === 'string' || typeof value === 'number' ? value : ''}`}
       className={`group relative rounded-md border bg-eoc-panel p-3.5 flex flex-col justify-between transition-colors shadow-tactical hover:border-eoc-border2 ${toneCls}`}
     >
       <div className="flex items-center justify-between text-xs text-eoc-muted mb-2 font-mono uppercase tracking-wider font-semibold">

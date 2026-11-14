@@ -72,7 +72,7 @@ export const AnalyticsDashboard: React.FC = () => {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: 'rgba(255,255,255,0.1)', color: '#f3f4f6' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#0C121E', borderColor: 'rgba(6,182,212,0.3)', color: '#f3f4f6' }} itemStyle={{ color: '#38BDF8', fontWeight: 600 }} labelStyle={{ color: '#FFFFFF', fontWeight: 700 }} />
               <Legend wrapperStyle={{ color: '#f3f4f6' }} />
             </PieChart>
           </ResponsiveContainer>
@@ -97,7 +97,7 @@ export const AnalyticsDashboard: React.FC = () => {
                   <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: 'rgba(255,255,255,0.1)', color: '#f3f4f6' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#0C121E', borderColor: 'rgba(6,182,212,0.3)', color: '#f3f4f6' }} itemStyle={{ color: '#38BDF8', fontWeight: 600 }} labelStyle={{ color: '#FFFFFF', fontWeight: 700 }} />
               <Legend wrapperStyle={{ color: '#f3f4f6' }} />
             </PieChart>
           </ResponsiveContainer>
@@ -113,7 +113,7 @@ export const AnalyticsDashboard: React.FC = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis dataKey="zone_name" stroke="#9ca3af" />
               <YAxis stroke="#9ca3af" />
-              <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: 'rgba(255,255,255,0.1)', color: '#f3f4f6' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#0C121E', borderColor: 'rgba(6,182,212,0.3)', color: '#f3f4f6' }} itemStyle={{ color: '#38BDF8', fontWeight: 600 }} labelStyle={{ color: '#FFFFFF', fontWeight: 700 }} />
               <Legend wrapperStyle={{ color: '#f3f4f6' }} />
               <Bar dataKey="unresolved_count" fill="#3b82f6" name="Request Count" />
             </BarChart>
@@ -128,7 +128,7 @@ export const AnalyticsDashboard: React.FC = () => {
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis dataKey="date" stroke="#9ca3af" />
               <YAxis stroke="#9ca3af" />
-              <Tooltip contentStyle={{ backgroundColor: '#111', borderColor: 'rgba(255,255,255,0.1)', color: '#f3f4f6' }} />
+              <Tooltip contentStyle={{ backgroundColor: '#0C121E', borderColor: 'rgba(6,182,212,0.3)', color: '#f3f4f6' }} itemStyle={{ color: '#38BDF8', fontWeight: 600 }} labelStyle={{ color: '#FFFFFF', fontWeight: 700 }} />
               <Legend wrapperStyle={{ color: '#f3f4f6' }} />
               <Line type="monotone" dataKey="allocated" stroke="#22c55e" name="Units Allocated" strokeWidth={2} />
             </LineChart>

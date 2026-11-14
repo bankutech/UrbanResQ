@@ -28,7 +28,7 @@ export default function RescueTeamsPage() {
     <div className="space-y-4 font-sans">
       <PageHeader
         title="Field Rescue Teams & Task Forces"
-        subtitle="Tactical search & rescue squads, specialized extraction units, and rapid disaster deployment rosters"
+        subtitle="Field squad readiness, specializations, and deployments"
         freshness="GPS Telemetry Active"
         action={
           <Button variant="secondary" size="sm" onClick={reload}>

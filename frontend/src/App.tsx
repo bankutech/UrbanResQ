@@ -34,6 +34,7 @@ const SearchResultsPage        = lazy(() => import("./pages/SearchResultsPage"))
 const DroneSurveillancePage    = lazy(() => import("./pages/DroneSurveillancePage"));
 const AnalyticsDashboard       = lazy(() => import("./pages/AnalyticsDashboard").then(m => ({ default: m.AnalyticsDashboard })));
 const CitizenReportApp         = lazy(() => import("./pages/CitizenReportApp").then(m => ({ default: m.CitizenReportApp })));
+const SpecApp                  = lazy(() => import("./spec-workspace/SpecApp"));
 
 // ---------------------------------------------------------------------------
 // Page-level loading fallback — minimal, non-janky
@@ -94,6 +95,8 @@ export default function App() {
     <Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        {/* Specification Workspace (19 Interconnected Sections) */}
+        <Route path="/spec/*" element={<SpecApp />} />
         <Route
           path="/"
           element={

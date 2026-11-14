@@ -2,12 +2,10 @@ import React, { useState, useMemo } from 'react';
 import { 
   Home, 
   Users, 
-  Coffee, 
-  Droplets, 
   ShieldCheck, 
   UserPlus, 
   CheckCircle2, 
-  AlertTriangle 
+  UserMinus
 } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch';
 import { api, apiErrorMessage } from '../api/client';
@@ -18,6 +16,7 @@ import { useAuth } from '../hooks/useAuth';
 export default function SheltersPage() {
   const { hasRole } = useAuth();
   const { data, loading, error, reload } = useFetch<any[]>('/shelters');
+  const { data: residents, loading: resLoading, reload: reloadResidents } = useFetch<any[]>('/shelters/residents');
   const [checkInShelter, setCheckInShelter] = useState<any | null>(null);
   const [residentName, setResidentName] = useState('');
   const [citizenId, setCitizenId] = useState('');
@@ -25,7 +24,8 @@ export default function SheltersPage() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const shelters = data || [];
-  const canCheckIn = hasRole('EMERGENCY_MANAGER', 'DISASTER_OFFICER');
+  const activeResidents = residents || [];
+  const canManage = hasRole('EMERGENCY_MANAGER', 'DISASTER_OFFICER', 'ADMIN');
 
   const totalMax = useMemo(() => shelters.reduce((acc, s) => acc + (s.max_capacity || 0), 0), [shelters]);
   const totalOccupied = useMemo(() => shelters.reduce((acc, s) => acc + (s.current_occupancy || 0), 0), [shelters]);
@@ -46,6 +46,7 @@ export default function SheltersPage() {
       setResidentName('');
       setCitizenId('');
       reload();
+      reloadResidents();
     } catch (err) {
       setActionError(apiErrorMessage(err));
     } finally {
@@ -53,14 +54,25 @@ export default function SheltersPage() {
     }
   }
 
+  async function handleCheckOut(residentId: string) {
+    setActionError(null);
+    try {
+      await api.post(`/shelters/residents/${residentId}/checkout`);
+      reload();
+      reloadResidents();
+    } catch (err) {
+      setActionError(apiErrorMessage(err));
+    }
+  }
+
   return (
     <div className="space-y-4 font-sans">
       <PageHeader
         title="Relief Shelters & Evacuee Logistics"
-        subtitle="Evacuee intake, bed capacity, food/water reserve levels, and medical support across municipal shelters"
+        subtitle="Evacuee intake, remaining capacity, and utility reserves"
         freshness="Shelter Telemetry Active"
         action={
-          <Button variant="secondary" size="sm" onClick={reload}>
+          <Button variant="secondary" size="sm" onClick={() => { reload(); reloadResidents(); }}>
             SYNC SHELTERS
           </Button>
         }
@@ -173,7 +185,7 @@ export default function SheltersPage() {
             {
               header: 'Intake Action',
               render: (s: any) => {
-                if (!canCheckIn) {
+                if (!canManage) {
                   return <span className="text-[10px] font-mono text-eoc-subtle">READ-ONLY</span>;
                 }
                 const hasCapacity = s.available_capacity > 0;
@@ -194,6 +206,61 @@ export default function SheltersPage() {
         />
       </Panel>
 
+      {/* Active Evacuee Residents Registry */}
+      <Panel title={`Active Evacuee Residents Registry (${activeResidents.length} checked in)`}>
+        <DataTable
+          loading={resLoading}
+          rows={activeResidents}
+          emptyMessage="No residents currently logged in shelter network."
+          columns={[
+            {
+              header: 'Resident Name',
+              render: (r: any) => (
+                <div className="font-mono text-xs font-semibold text-eoc-text">
+                  {r.full_name}
+                </div>
+              )
+            },
+            {
+              header: 'Shelter Hub',
+              render: (r: any) => (
+                <div>
+                  <div className="text-xs font-semibold text-eoc-text">{r.shelter_name}</div>
+                  <div className="text-[10px] font-mono text-eoc-muted">{r.shelter_code}</div>
+                </div>
+              )
+            },
+            {
+              header: 'Check-In Timestamp',
+              render: (r: any) => (
+                <div className="font-mono text-xs text-eoc-muted">
+                  {r.checked_in_at ? new Date(r.checked_in_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '—'}
+                </div>
+              )
+            },
+            {
+              header: 'Checkout Action',
+              render: (r: any) => {
+                if (!canManage) {
+                  return <span className="text-[10px] font-mono text-eoc-subtle">—</span>;
+                }
+                return (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleCheckOut(r.resident_id)}
+                    className="text-amber-400 hover:text-amber-300 border border-amber-500/30 hover:border-amber-500/60"
+                  >
+                    <UserMinus size={12} />
+                    Check-Out & Free Bed
+                  </Button>
+                );
+              }
+            }
+          ]}
+        />
+      </Panel>
+
       {/* Evacuee Check-In Modal */}
       {checkInShelter && (
         <div 
@@ -205,22 +272,22 @@ export default function SheltersPage() {
           <div className="w-full max-w-md rounded-md border border-cyan-500/40 bg-eoc-panel p-5 shadow-tactical-accent font-sans">
             <h3 id="checkin-modal-title" className="text-base font-bold font-display text-eoc-text flex items-center gap-2">
               <UserPlus size={16} className="text-cyan-400" />
-              Evacuee Shelter Check-In
+              Shelter Evacuee Intake
             </h3>
             <p className="mt-1 text-xs text-eoc-muted font-mono">
-              Shelter: <strong className="text-eoc-text">{checkInShelter.name}</strong> ({checkInShelter.available_capacity} beds free)
+              Target Shelter: <strong className="text-eoc-text">{checkInShelter.name}</strong> ({checkInShelter.available_capacity} free beds)
             </p>
 
             <form onSubmit={handleCheckInSubmit} className="mt-4 space-y-3 font-mono text-xs">
               <div>
                 <label className="block text-[11px] text-eoc-muted mb-1">
-                  RESIDENT / CITIZEN FULL NAME:
+                  EVACUEE FULL NAME:
                 </label>
                 <input
                   type="text"
                   value={residentName}
                   onChange={(e) => setResidentName(e.target.value)}
-                  placeholder="e.g. Maria Gonzalez"
+                  placeholder="e.g. Priya Sundaram"
                   className="w-full rounded border border-eoc-border bg-eoc-panel2 px-3 py-1.5 text-sm text-eoc-text outline-none focus:border-cyan-400"
                   required
                 />
@@ -228,13 +295,13 @@ export default function SheltersPage() {
 
               <div>
                 <label className="block text-[11px] text-eoc-muted mb-1">
-                  CITIZEN ID / NATIONAL IDENTIFIER (OPTIONAL):
+                  CITIZEN IDENTIFIER (OPTIONAL):
                 </label>
                 <input
                   type="text"
                   value={citizenId}
                   onChange={(e) => setCitizenId(e.target.value)}
-                  placeholder="e.g. ID-8942-X"
+                  placeholder="e.g. CIT-4029"
                   className="w-full rounded border border-eoc-border bg-eoc-panel2 px-3 py-1.5 text-xs text-eoc-text outline-none focus:border-cyan-400"
                 />
               </div>
@@ -255,7 +322,7 @@ export default function SheltersPage() {
                   disabled={isSubmitting}
                   className="bg-cyan-600 hover:bg-cyan-500"
                 >
-                  {isSubmitting ? 'Registering Evacuee...' : 'Confirm Shelter Check-In'}
+                  {isSubmitting ? 'Registering...' : 'Confirm Evacuee Intake'}
                 </Button>
               </div>
             </form>

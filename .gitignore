@@ -19,3 +19,7 @@ backups/*
 !backups/.gitkeep
 .vscode/
 .idea/
+scratch/
+test_sync.js
+test/screenshots/
+graphify-out/cache/

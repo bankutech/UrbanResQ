@@ -53,7 +53,7 @@ export default function EmergencyRequestsPage() {
     <div className="space-y-4 font-sans">
       <PageHeader
         title="Emergency Request Triage & Intake"
-        subtitle="Citizen distress calls and agency resource requests ranked dynamically by multi-factor algorithmic priority scoring"
+        subtitle="Live distress queue ranked by automated algorithmic priority score"
         freshness="Live Triage Dispatch Stream"
         action={
           <div className="flex items-center gap-2">

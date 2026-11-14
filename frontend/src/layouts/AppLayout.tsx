@@ -31,7 +31,8 @@ import {
   Activity,
   Shield,
   UserCheck,
-  ChevronDown
+  ChevronDown,
+  Compass
 } from "lucide-react";
 import { useAuth, DEMO_ACCOUNTS } from "../hooks/useAuth";
 import { useTheme } from "../hooks/useTheme";
@@ -84,7 +85,7 @@ const NAV: NavItem[] = [
     label: "Resource Allocation",
     icon: Send,
     roles: ["EMERGENCY_MANAGER", "RESOURCE_MANAGER"],
-    badge: "FIFO",
+    badge: "FEFO/FIFO",
   },
   { section: "Logistics" },
   {
@@ -160,6 +161,13 @@ const NAV: NavItem[] = [
     label: "Operations Reports",
     icon: FileText,
     roles: ["VIEWER", "EMERGENCY_MANAGER"],
+  },
+  { section: "Engineering" },
+  {
+    to: "/spec/overview",
+    label: "Spec Workspace",
+    icon: Compass,
+    badge: "19 SEC",
   },
   { section: "System" },
   {
@@ -440,6 +448,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
             {/* Right Telemetry Controls */}
             <div className="flex items-center gap-2.5">
+              {/* Spec Workspace Link */}
+              <NavLink
+                to="/spec/overview"
+                className="hidden sm:flex items-center gap-1.5 rounded border border-cyan-800 bg-cyan-950/80 px-2 py-0.5 text-[11px] font-mono text-cyan-300 hover:border-cyan-400 hover:text-white transition-colors"
+                title="Open 19-Section Specification Workspace"
+              >
+                <Compass size={13} className="text-cyan-400" />
+                <span className="hidden md:inline">Spec Workspace</span>
+                <span className="rounded bg-cyan-900 px-1 py-0.2 text-[9px] text-cyan-200 font-bold">19</span>
+              </NavLink>
               {/* Live Socket.IO Status Pill */}
               <div 
                 className={`flex items-center gap-1.5 px-2 py-0.5 rounded border text-[11px] font-mono ${

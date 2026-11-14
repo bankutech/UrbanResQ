@@ -3,13 +3,11 @@ import {
   Building2, 
   Activity, 
   HeartPulse, 
-  AlertOctagon, 
   UserPlus, 
   CheckCircle2, 
-  Plus, 
-  ShieldAlert, 
   Syringe,
-  Bed
+  Bed,
+  UserMinus
 } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch';
 import { api, apiErrorMessage } from '../api/client';
@@ -20,6 +18,7 @@ import { useAuth } from '../hooks/useAuth';
 export default function HospitalsPage() {
   const { hasRole } = useAuth();
   const { data, loading, error, reload } = useFetch<any[]>('/hospitals');
+  const { data: admissions, loading: admLoading, reload: reloadAdmissions } = useFetch<any[]>('/hospitals/admissions');
   const [admitHospital, setAdmitHospital] = useState<any | null>(null);
   const [patientName, setPatientName] = useState('');
   const [condition, setCondition] = useState<'STABLE' | 'SERIOUS' | 'CRITICAL'>('SERIOUS');
@@ -28,7 +27,8 @@ export default function HospitalsPage() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const hospitals = data || [];
-  const canAdmit = hasRole('MEDICAL_COORDINATOR', 'EMERGENCY_MANAGER');
+  const activeAdmissions = admissions || [];
+  const canAdmit = hasRole('MEDICAL_COORDINATOR', 'EMERGENCY_MANAGER', 'ADMIN');
 
   const totalBeds = useMemo(() => hospitals.reduce((acc, h) => acc + (h.total_beds || 0), 0), [hospitals]);
   const availableBeds = useMemo(() => hospitals.reduce((acc, h) => acc + (h.available_beds || 0), 0), [hospitals]);
@@ -50,6 +50,7 @@ export default function HospitalsPage() {
       setAdmitHospital(null);
       setPatientName('');
       reload();
+      reloadAdmissions();
     } catch (err) {
       setActionError(apiErrorMessage(err));
     } finally {
@@ -57,16 +58,29 @@ export default function HospitalsPage() {
     }
   }
 
+  async function handleDischarge(admissionId: string) {
+    setActionError(null);
+    try {
+      await api.post(`/hospitals/admissions/${admissionId}/discharge`);
+      reload();
+      reloadAdmissions();
+    } catch (err) {
+      setActionError(apiErrorMessage(err));
+    }
+  }
+
   return (
     <div className="space-y-4 font-sans">
       <PageHeader
         title="Hospital Facilities & ER Surge Capacity"
-        subtitle="Critical care telemetry, ICU bed availability, blood bank reserves, and rapid patient admission triage"
+        subtitle="ER & ICU bed capacity, trauma levels, and patient admission triage"
         freshness="Hospital Health Telemetry Active"
         action={
-          <Button variant="secondary" size="sm" onClick={reload}>
-            SYNC CAPACITY
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" size="sm" onClick={() => { reload(); reloadAdmissions(); }}>
+              SYNC CAPACITY
+            </Button>
+          </div>
         }
       />
 
@@ -87,11 +101,11 @@ export default function HospitalsPage() {
           sub="Ventilator-Ready Critical Care"
         />
         <StatCard 
-          label="Active ER Intake" 
-          value={totalEdPatients} 
-          tone="warning"
+          label="Active Admissions" 
+          value={activeAdmissions.length} 
+          tone={activeAdmissions.length > 20 ? "warning" : "normal"}
           icon={Activity}
-          sub="Patients currently in triage"
+          sub="Current Inpatients Under Care"
         />
         <StatCard 
           label="Blood Bank Reserves" 
@@ -203,6 +217,65 @@ export default function HospitalsPage() {
                 );
               },
             },
+          ]}
+        />
+      </Panel>
+
+      {/* Active Inpatients & Bed Diversion Triage Table */}
+      <Panel title={`Active Patient Admissions & Triage Registry (${activeAdmissions.length} active)`}>
+        <DataTable
+          loading={admLoading}
+          rows={activeAdmissions}
+          emptyMessage="No patients currently admitted across hospital network."
+          columns={[
+            {
+              header: 'Patient / Triage Tag',
+              render: (a: any) => (
+                <div className="font-mono text-xs font-semibold text-eoc-text">
+                  {a.patient_name || 'Anonymous Patient'}
+                </div>
+              )
+            },
+            {
+              header: 'Hospital Facility',
+              render: (a: any) => (
+                <div>
+                  <div className="text-xs font-semibold text-eoc-text">{a.hospital_name}</div>
+                  <div className="text-[10px] font-mono text-eoc-muted">{a.hospital_code}</div>
+                </div>
+              )
+            },
+            {
+              header: 'Triage Severity',
+              render: (a: any) => <StatusBadge value={a.condition_severity} />
+            },
+            {
+              header: 'Admission Time',
+              render: (a: any) => (
+                <div className="font-mono text-xs text-eoc-muted">
+                  {a.admitted_at ? new Date(a.admitted_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '—'}
+                </div>
+              )
+            },
+            {
+              header: 'Discharge Action',
+              render: (a: any) => {
+                if (!canAdmit) {
+                  return <span className="text-[10px] font-mono text-eoc-subtle">—</span>;
+                }
+                return (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDischarge(a.admission_id)}
+                    className="text-emerald-400 hover:text-emerald-300 border border-emerald-500/30 hover:border-emerald-500/60"
+                  >
+                    <UserMinus size={12} />
+                    Discharge & Free Bed
+                  </Button>
+                );
+              }
+            }
           ]}
         />
       </Panel>

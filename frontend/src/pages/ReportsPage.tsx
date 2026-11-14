@@ -37,7 +37,7 @@ export default function ReportsPage() {
     <div className="space-y-4 font-sans">
       <PageHeader
         title="Municipal Operations Reports & Data Exports"
-        subtitle="Export verified real-time crisis data to CSV for external state audit, FEMA reporting, or print command briefs"
+        subtitle="Export verified crisis datasets to CSV for command briefs and external audits"
         freshness="FEMA / ISO 11064 Compliance Ready"
       />
 

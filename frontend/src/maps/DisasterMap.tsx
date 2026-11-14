@@ -105,9 +105,15 @@ export default function DisasterMap({
   selectedId?: string | number | null;
   onSelectMarker?: (marker: MapMarker) => void;
 }) {
+  const validMarkers = useMemo(() => {
+    return (markers || []).filter(
+      (m) => typeof m?.lat === 'number' && typeof m?.lng === 'number' && !isNaN(m.lat) && !isNaN(m.lng)
+    );
+  }, [markers]);
+
   const selectedCoord = useMemo(() => {
     if (!selectedId) return undefined;
-    const found = markers.find((m) => m.id === selectedId);
+    const found = validMarkers.find((m) => m.id === selectedId);
     return found ? ([found.lat, found.lng] as [number, number]) : undefined;
   }, [selectedId, markers]);
 
@@ -142,7 +148,7 @@ export default function DisasterMap({
           <HeatmapLayer points={heatmapPoints} />
         )}
 
-        {!showHeatmap && markers.filter(m => m.type === 'disaster').map((m) => (
+        {!showHeatmap && validMarkers.filter(m => m.type === 'disaster').map((m) => (
           <Circle
             key={`radius-${m.id}`}
             center={[m.lat, m.lng]}
@@ -157,7 +163,7 @@ export default function DisasterMap({
           />
         ))}
 
-        {!showHeatmap && markers.map((m) => {
+        {!showHeatmap && validMarkers.map((m) => {
           const isSelected = selectedId === m.id;
           const icon = createTacticalIcon(m.type, m.severity, isSelected);
 
@@ -183,7 +189,7 @@ export default function DisasterMap({
                     {m.meta || `Type: ${m.type.toUpperCase()}`}
                   </div>
                   <div className="mt-1 text-[9px] text-cyan-400">
-                    GPS: {m.lat.toFixed(4)}°N, {m.lng.toFixed(4)}°E
+                    GPS: {Number(m.lat || 0).toFixed(4)}°N, {Number(m.lng || 0).toFixed(4)}°E
                   </div>
                 </div>
               </Popup>

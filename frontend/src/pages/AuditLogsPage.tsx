@@ -1,20 +1,17 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { 
   ScrollText, 
   ShieldCheck, 
   Lock, 
-  Key, 
+  Database, 
   Eye, 
-  Search, 
-  Clock, 
   User, 
-  CheckCircle2, 
   FileCode,
   X
 } from 'lucide-react';
 import { useFetch } from '../hooks/useFetch';
 import { DataTable } from '../components/DataTable';
-import { Panel, PageHeader, StatCard, Button, StatusBadge, SelectInput } from '../components/ui';
+import { Panel, PageHeader, StatCard, Button, SelectInput } from '../components/ui';
 
 export default function AuditLogsPage() {
   const [page, setPage] = useState(1);
@@ -34,9 +31,9 @@ export default function AuditLogsPage() {
   return (
     <div className="space-y-4 font-sans">
       <PageHeader
-        title="Immutable Intelligence & Audit Trail"
-        subtitle="Cryptographically sealed, append-only transaction ledger capturing every critical EOC action and state mutation"
-        freshness="SHA-256 Merkle Ledger Synchronized"
+        title="Operations Audit Trail & State Mutations"
+        subtitle="Immutable operational audit trail and state mutation journal"
+        freshness="MySQL InnoDB Transaction Log Synchronized"
         action={
           <div className="flex items-center gap-2">
             <SelectInput
@@ -53,7 +50,7 @@ export default function AuditLogsPage() {
               <option value="volunteer">Volunteer Deployments</option>
             </SelectInput>
             <Button variant="secondary" size="sm" onClick={reload}>
-              VERIFY SEALS
+              REFRESH LOGS
             </Button>
           </div>
         }
@@ -69,30 +66,30 @@ export default function AuditLogsPage() {
           sub="Append-only transaction log"
         />
         <StatCard 
-          label="Tamper Seal Status" 
-          value="100% INTACT" 
+          label="Audit Constraint" 
+          value="APPEND ONLY" 
           tone="normal"
           icon={ShieldCheck}
-          sub="Zero broken hash chains"
+          sub="Immutable database table"
         />
         <StatCard 
-          label="Active Audit Actors" 
+          label="Authorized Principals" 
           value="7 ROLES" 
           tone="normal"
           icon={Lock}
-          sub="RBAC credential authenticated"
+          sub="RBAC authenticated operators"
         />
         <StatCard 
-          label="Cryptographic Hash" 
-          value="SHA-256" 
+          label="Storage Engine" 
+          value="INNODB ACID" 
           tone="normal"
-          icon={Key}
-          sub="ACID trigger validation"
+          icon={Database}
+          sub="Row-locked audit logging"
         />
       </div>
 
       {/* Audit Log Table */}
-      <Panel title="Cryptographic Ledger Journal">
+      <Panel title="Operations Audit Journal">
         <DataTable
           loading={loading}
           error={error}
@@ -102,7 +99,7 @@ export default function AuditLogsPage() {
           emptyMessage="No audit ledger entries recorded."
           columns={[
             { 
-              header: 'Seal Timestamp', 
+              header: 'Timestamp', 
               render: (a: any) => (
                 <div className="font-mono text-xs tabular-nums text-eoc-muted">
                   <div className="text-eoc-text font-semibold">
@@ -164,7 +161,7 @@ export default function AuditLogsPage() {
 
         {data && (
           <div className="mt-3 flex items-center justify-between text-xs font-mono text-eoc-muted border-t border-eoc-border pt-2.5">
-            <span>SHOWING {logs.length} OF {data.total} IMMUTABLE TRANSACTIONS</span>
+            <span>SHOWING {logs.length} OF {data.total} AUDIT TRANSACTIONS</span>
             <div className="flex gap-2">
               <Button 
                 variant="secondary" 
@@ -187,7 +184,7 @@ export default function AuditLogsPage() {
         )}
       </Panel>
 
-      {/* Cryptographic Diff Inspector Drawer / Modal */}
+      {/* Diff Inspector Modal */}
       {selectedLog && (
         <div 
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
@@ -213,19 +210,19 @@ export default function AuditLogsPage() {
             </div>
 
             <div className="mt-3 space-y-3 font-mono text-xs overflow-y-auto flex-1 pr-1">
-              {/* Hash Seal Badge */}
-              <div className="rounded border border-emerald-500/40 bg-emerald-950/20 p-2.5 flex items-center justify-between">
+              {/* Record Verification Badge */}
+              <div className="rounded border border-cyan-500/40 bg-cyan-950/20 p-2.5 flex items-center justify-between">
                 <div>
-                  <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <div className="text-[10px] text-cyan-400 font-bold uppercase tracking-wider flex items-center gap-1.5">
                     <ShieldCheck size={13} />
-                    <span>CRYPTOGRAPHIC MERKLE LEAF SEAL</span>
+                    <span>RELATIONAL AUDIT LOG RECORD</span>
                   </div>
                   <div className="text-[11px] text-slate-300 font-mono mt-0.5 select-all">
-                    0x{(Math.sin(selectedLog.audit_id || 1) * 10000000).toString(16).slice(2, 18)}8f7c9e2b4a1d603e
+                    UUID: {selectedLog.audit_id || 'system-generated'}
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-emerald-300 border border-emerald-500/50 px-2 py-0.5 rounded bg-emerald-950">
-                  SEAL VALID
+                <span className="text-[10px] font-bold text-cyan-300 border border-cyan-500/50 px-2 py-0.5 rounded bg-cyan-950">
+                  COMMITTED
                 </span>
               </div>
 

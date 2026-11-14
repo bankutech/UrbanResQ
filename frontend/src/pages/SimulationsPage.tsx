@@ -44,7 +44,7 @@ export default function SimulationsPage() {
     <div className="space-y-4 font-sans">
       <PageHeader
         title="What-If Crisis Simulation & Stress Testing"
-        subtitle="Simulate casualty surges, depot supply shortages, and cascade failures in transactional rollback mode (ACID safe)"
+        subtitle="Dry-run disaster surge modeling and stress testing"
         freshness="Simulation Sandbox Mode · Production Safe"
       />
 

@@ -55,7 +55,7 @@ export default function CommandCenterPage() {
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showDroneFeed, setShowDroneFeed] = useState(false);
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | number | null>(null);
-  const [filterLayer, setFilterLayer] = useState<'all' | 'disaster' | 'hospital' | 'shelter' | 'team'>('all');
+  const [filterLayer, setFilterLayer] = useState<'all' | 'disaster' | 'hospital' | 'shelter' | 'team' | 'request'>('all');
 
   const flagship = dashboard?.disasters?.[0];
 
@@ -144,8 +144,23 @@ export default function CommandCenterPage() {
         })
       );
     }
+    if (allRequests?.data) {
+      allRequests.data.forEach((r: any) => {
+        if (r.latitude && r.longitude) {
+          list.push({
+            id: `req-${r.request_id}`,
+            lat: Number(r.latitude),
+            lng: Number(r.longitude),
+            label: `${r.category}: ${r.description?.slice(0, 35)}...`,
+            type: 'request',
+            severity: r.urgency === 'CRITICAL' ? 'CRITICAL' : r.urgency === 'HIGH' ? 'HIGH' : 'MODERATE',
+            meta: `Urgency: ${r.urgency} · People: ${r.people_affected || 1} · Priority: ${r.live_priority_score || '—'}`
+          });
+        }
+      });
+    }
     return list;
-  }, [dashboard?.disasters, teams, hospitals, shelters]);
+  }, [dashboard?.disasters, teams, hospitals, shelters, allRequests?.data]);
 
   const filteredMarkers = useMemo(() => {
     if (filterLayer === 'all') return allMarkers;
@@ -168,7 +183,7 @@ export default function CommandCenterPage() {
       <div className="flex flex-wrap items-center justify-between gap-3 bg-eoc-panel border border-eoc-border px-4 py-2.5 shadow-tactical">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center border border-cyan-500/40 bg-cyan-950/80 text-cyan-400">
-            <Radio size={16} className="animate-pulse" />
+            <Radio size={16} className="animate-pulse motion-reduce:animate-none" />
           </div>
           <div>
             <div className="text-sm font-bold font-display tracking-tight text-eoc-text flex items-center gap-2">
@@ -190,7 +205,7 @@ export default function CommandCenterPage() {
             onClick={() => setShowDroneFeed(true)}
             className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-950/40"
           >
-            <Video size={13} className="text-red-400 animate-pulse" />
+            <Video size={13} className="text-red-400 animate-pulse motion-reduce:animate-none" />
             <span>UAV DRONE FEED</span>
           </Button>
 
@@ -226,6 +241,7 @@ export default function CommandCenterPage() {
                 >
                   <option value="all">ALL ASSETS ({allMarkers.length})</option>
                   <option value="disaster">DISASTERS ONLY</option>
+                  <option value="request">CITIZEN INCIDENTS</option>
                   <option value="hospital">HOSPITALS</option>
                   <option value="shelter">SHELTERS</option>
                   <option value="team">RESCUE TEAMS</option>
@@ -264,8 +280,12 @@ export default function CommandCenterPage() {
           <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-1.5 border border-eoc-border bg-eoc-panel font-mono text-[11px] text-eoc-muted">
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5">
-                <span className="h-2 w-2 bg-red-500 animate-pulse" />
+                <span className="h-2 w-2 bg-red-500 animate-pulse motion-reduce:animate-none" />
                 <span className="text-red-300">Disaster Epicenter</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 bg-orange-500" />
+                <span className="text-orange-300">Citizen Incidents</span>
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="h-2 w-2 bg-cyan-400" />

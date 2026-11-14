@@ -31,9 +31,9 @@ const LiveClock = memo(function LiveClock() {
   }, []);
 
   return (
-    <div className="flex items-center gap-2 font-mono text-[11px]">
+    <div className="flex items-center gap-2 font-mono text-[11px]" aria-label="Mission Clock (IST)">
       <div className="flex items-center gap-1.5 px-2 py-0.5 border border-slate-700/60 bg-slate-900/70 text-slate-300">
-        <span className="h-1.5 w-1.5 bg-emerald-400 animate-pulse" />
+        <span className="h-1.5 w-1.5 bg-emerald-400 animate-pulse motion-reduce:animate-none" />
         <span className="font-semibold text-white tracking-wide">
           {time.toLocaleTimeString("en-IN", { hour12: false })}
         </span>
@@ -63,7 +63,7 @@ const ROLE_METADATA: Record<
   },
   RESOURCE_MANAGER: {
     title: "Logistics Chief",
-    subtitle: "FIFO stock & depots",
+    subtitle: "FIFO/FEFO stock & depots",
     icon: Package,
   },
   MEDICAL_COORDINATOR: {
@@ -116,9 +116,9 @@ export default function LoginPage() {
     }
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email.trim(), password);
       navigate("/");
-    } catch (err) {
+    } catch (err: any) {
       setError(apiErrorMessage(err));
     } finally {
       setLoading(false);
@@ -133,16 +133,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="relative h-screen h-[100dvh] max-h-screen w-full bg-[#080C14] text-slate-100 overflow-hidden flex flex-col justify-between font-sans select-none selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div className="relative min-h-screen min-h-[100dvh] lg:h-screen lg:h-[100dvh] lg:max-h-screen w-full bg-[#080C14] text-slate-100 overflow-y-auto lg:overflow-hidden flex flex-col justify-between font-sans select-none selection:bg-cyan-500/30 selection:text-cyan-200">
       <Disaster3DCanvas />
 
-      <div className="fixed inset-0 bg-gradient-to-b from-[#080C14]/70 via-transparent to-[#080C14]/85 pointer-events-none z-10" />
-      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-[#080C14]/20 to-[#080C14]/80 pointer-events-none z-10" />
+      <div className="fixed inset-0 bg-gradient-to-b from-[#080C14]/70 via-transparent to-[#080C14]/85 pointer-events-none z-10" aria-hidden="true" />
+      <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-[#080C14]/20 to-[#080C14]/80 pointer-events-none z-10" aria-hidden="true" />
 
+      {/* Header */}
       <header className="relative z-20 w-full flex items-center justify-between px-3 sm:px-6 py-2 border-b border-slate-800/60 bg-[#090D16]/80 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="flex h-7 w-7 items-center justify-center border border-cyan-500/40 bg-cyan-950/70 text-cyan-400 shadow-[0_0_12px_rgba(6,182,212,0.25)]">
-            <Radio size={15} className="animate-pulse" />
+            <Radio size={15} className="animate-pulse motion-reduce:animate-none" aria-hidden="true" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -158,12 +159,12 @@ export default function LoginPage() {
 
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 border border-amber-500/30 bg-amber-950/30 text-amber-300 text-[10px] font-mono">
-            <AlertTriangle size={11} className="text-amber-400" />
+            <AlertTriangle size={11} className="text-amber-400" aria-hidden="true" />
             <span>DEFCON 2 · FLOOD SURGE</span>
           </div>
 
           <div className="hidden md:flex items-center gap-1.5 px-2 py-0.5 border border-slate-800 bg-slate-900/60 text-slate-400 text-[10px] font-mono">
-            <Compass size={11} className="text-cyan-400" />
+            <Compass size={11} className="text-cyan-400" aria-hidden="true" />
             <span>CHENNAI REGION</span>
           </div>
 
@@ -171,15 +172,17 @@ export default function LoginPage() {
         </div>
       </header>
 
-      <main className="relative z-20 flex-1 min-h-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-10 py-2 sm:py-3 overflow-hidden">
+      {/* Main Content */}
+      <main className="relative z-20 flex-1 min-h-0 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row items-center justify-between gap-6 lg:gap-10 py-3 sm:py-4 overflow-y-auto lg:overflow-hidden">
+        {/* Left Column: Hero */}
         <div className="hidden lg:flex flex-1 max-w-lg xl:max-w-xl flex-col justify-center space-y-3">
           <div className="flex items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-mono font-bold tracking-wider uppercase border border-cyan-500/40 bg-cyan-950/60 text-cyan-300">
-              <Radio size={11} className="text-cyan-400 animate-pulse" />
+              <Radio size={11} className="text-cyan-400 animate-pulse motion-reduce:animate-none" aria-hidden="true" />
               DISASTER RESILIENCE ENGINE
             </span>
             <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-mono text-amber-400 border border-amber-500/30 bg-amber-950/40">
-              <Flame size={11} className="text-amber-400" />
+              <Flame size={11} className="text-amber-400" aria-hidden="true" />
               DEFCON 2
             </span>
           </div>
@@ -192,10 +195,11 @@ export default function LoginPage() {
               </span>
             </h1>
             <p className="mt-2 text-xs text-slate-300/90 leading-relaxed font-sans max-w-lg">
-              Enterprise multi-agency operations console orchestrating automated FIFO medical inventory allocation, acute hospital surge triage, and field rescue telemetry across disaster zones.
+              Enterprise multi-agency operations console orchestrating automated FIFO/FEFO medical inventory allocation, acute hospital surge triage, and field rescue telemetry across disaster zones.
             </p>
           </div>
 
+          {/* Operational Metrics */}
           <div className="grid grid-cols-3 gap-2 pt-0.5">
             <div className="border border-slate-800 bg-[#0C121E]/80 backdrop-blur-md p-2 flex flex-col">
               <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wide">Incidents</span>
@@ -217,28 +221,29 @@ export default function LoginPage() {
           </div>
 
           <div className="flex items-center gap-2 pt-1 text-[10px] font-mono text-slate-400">
-            <div className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full bg-cyan-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 bg-cyan-500" />
+            <div className="flex h-2 w-2 relative" aria-hidden="true">
+              <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full bg-cyan-400 opacity-75 rounded-full" />
+              <span className="relative inline-flex h-2 w-2 bg-cyan-500 rounded-full" />
             </div>
             <span>3D Relief Medkit &amp; Topography · Interactive Mouse Gyroscope</span>
           </div>
         </div>
 
-        <div className="w-full max-w-[380px] xl:max-w-[395px] shrink-0">
+        {/* Right Column: Login Card */}
+        <div className="w-full max-w-[380px] xl:max-w-[395px] shrink-0 my-auto">
           <div className="border border-slate-750/90 bg-[#0C121E]/95 backdrop-blur-2xl shadow-[0_20px_50px_-10px_rgba(0,0,0,0.9)] relative overflow-hidden">
-            <div className="h-1 w-full bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500" />
+            <div className="h-1 w-full bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-500" aria-hidden="true" />
 
-            <div className="p-3 sm:p-3.5">
-              <div className="mb-2">
+            <div className="p-3 sm:p-4">
+              <div className="mb-2.5">
                 <div className="flex items-center justify-between mb-1">
                   <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-mono font-bold uppercase tracking-wider bg-cyan-950/80 text-cyan-300 border border-cyan-800/70">
-                    <Shield size={10} className="text-cyan-400" />
+                    <Shield size={10} className="text-cyan-400" aria-hidden="true" />
                     RESTRICTED CONSOLE
                   </span>
                   <span className="text-[9px] font-mono text-emerald-400 flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 bg-emerald-400 animate-pulse" />
-                    PORT 4000 SECURE
+                    <span className="h-1.5 w-1.5 bg-emerald-400 animate-pulse motion-reduce:animate-none rounded-full" aria-hidden="true" />
+                    EOC GATEWAY · READY
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
@@ -253,55 +258,65 @@ export default function LoginPage() {
 
               {error && (
                 <div
-                  className="mb-2 border border-red-500/40 bg-red-950/60 p-2 text-[11px] text-red-200 flex items-start gap-2"
+                  className="mb-2.5 border border-red-500/40 bg-red-950/60 p-2 text-[11px] text-red-200 flex items-start gap-2"
                   role="alert"
+                  aria-live="assertive"
                 >
-                  <AlertTriangle size={14} className="text-red-400 shrink-0 mt-0.5" />
+                  <AlertTriangle size={14} className="text-red-400 shrink-0 mt-0.5" aria-hidden="true" />
                   <div className="flex-1 font-mono leading-tight">
                     <span className="font-bold">Error:</span> {error}
                   </div>
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-2">
+              <form onSubmit={handleSubmit} className="space-y-2.5">
                 <div>
+                  <label htmlFor="operator-email" className="sr-only">Operator Email</label>
                   <div className="relative">
                     <Mail
                       size={14}
                       className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                      aria-hidden="true"
                     />
                     <input
+                      id="operator-email"
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="operator@urbanresq.city"
                       required
                       autoComplete="username"
-                      className="w-full border border-slate-700/80 bg-[#141C2B] pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-slate-500 outline-none transition-all focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20"
+                      disabled={loading}
+                      className="w-full min-h-[40px] border border-slate-700/80 bg-[#141C2B] pl-8 pr-3 py-1.5 text-xs text-white placeholder:text-slate-500 outline-none transition-all focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20"
                     />
                   </div>
                 </div>
 
                 <div>
+                  <label htmlFor="operator-password" className="sr-only">Operator Password</label>
                   <div className="relative">
                     <Lock
                       size={14}
                       className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
+                      aria-hidden="true"
                     />
                     <input
+                      id="operator-password"
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter password"
                       required
                       autoComplete="current-password"
-                      className="w-full border border-slate-700/80 bg-[#141C2B] pl-8 pr-8 py-1.5 text-xs text-white placeholder:text-slate-500 outline-none transition-all focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20 font-mono"
+                      disabled={loading}
+                      className="w-full min-h-[40px] border border-slate-700/80 bg-[#141C2B] pl-8 pr-8 py-1.5 text-xs text-white placeholder:text-slate-500 outline-none transition-all focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400/20 font-mono"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center focus-visible:ring-1 focus-visible:ring-cyan-400"
                       aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-pressed={showPassword}
                     >
                       {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
@@ -311,11 +326,11 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full mt-1 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 active:scale-[0.99] py-1.5 sm:py-2 px-3 text-xs font-semibold text-white shadow-md shadow-cyan-600/20 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 tracking-wide uppercase"
+                  className="w-full mt-1.5 min-h-[44px] bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 active:scale-[0.99] py-2 px-3 text-xs font-semibold text-white shadow-md shadow-cyan-600/20 transition-all flex items-center justify-center gap-1.5 disabled:opacity-50 tracking-wide uppercase focus-visible:ring-2 focus-visible:ring-cyan-400"
                 >
                   {loading ? (
                     <>
-                      <Loader2 size={14} className="animate-spin text-white" />
+                      <Loader2 size={14} className="animate-spin motion-reduce:animate-none text-white" />
                       <span>Authenticating…</span>
                     </>
                   ) : (
@@ -327,7 +342,8 @@ export default function LoginPage() {
                 </button>
               </form>
 
-              <div className="mt-2 pt-2 border-t border-slate-800/80">
+              {/* 1-Click Role Presets */}
+              <div className="mt-2.5 pt-2 border-t border-slate-800/80">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wide">
                     Authorized Presets
@@ -337,7 +353,7 @@ export default function LoginPage() {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-1 max-h-[100px] overflow-y-auto pr-0.5">
+                <div className="grid grid-cols-2 gap-1.5 max-h-[125px] sm:max-h-[110px] overflow-y-auto pr-0.5">
                   {Object.entries(DEMO_ACCOUNTS).map(([roleKey, acc]) => {
                     const isSelected = selectedRole === roleKey || email === acc.email;
                     const meta = ROLE_METADATA[roleKey] || {
@@ -352,7 +368,7 @@ export default function LoginPage() {
                         key={roleKey}
                         type="button"
                         onClick={() => handleSelectRole(roleKey, acc.email)}
-                        className={`text-left p-1.5 border transition-all flex flex-col justify-between ${
+                        className={`text-left p-1.5 min-h-[44px] border transition-all flex flex-col justify-between ${
                           isSelected
                             ? "border-cyan-500/70 bg-cyan-950/50 text-cyan-100 shadow-[0_0_10px_rgba(6,182,212,0.15)] ring-1 ring-cyan-500/30"
                             : "border-slate-800/90 bg-[#101726]/80 text-slate-300 hover:border-slate-700 hover:bg-[#141C2B]"
@@ -378,7 +394,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div className="mt-1.5 pt-1 border-t border-slate-800/50 flex items-center justify-between text-[9px] text-slate-400 font-mono">
+              <div className="mt-2 pt-1 border-t border-slate-800/50 flex items-center justify-between text-[9px] text-slate-400 font-mono">
                 <span>Pass: UrbanResQ@2026</span>
                 <span>Audited Session</span>
               </div>
@@ -387,6 +403,7 @@ export default function LoginPage() {
         </div>
       </main>
 
+      {/* Footer */}
       <footer className="relative z-20 w-full flex items-center justify-between px-3 sm:px-6 py-1.5 text-[10px] font-mono text-slate-400 border-t border-slate-800/60 bg-[#090D16]/80 backdrop-blur-md shrink-0">
         <div className="flex items-center gap-2">
           <Layers size={11} className="text-cyan-400" />

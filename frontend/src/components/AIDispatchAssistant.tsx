@@ -30,10 +30,10 @@ export function AIDispatchAssistant() {
       <button 
         onClick={() => setIsOpen(true)}
         className="fixed bottom-10 right-5 z-40 flex h-10 w-10 items-center justify-center rounded border border-cyan-500/50 bg-cyan-950/90 text-cyan-400 shadow-tactical-accent hover:bg-cyan-900 transition-colors"
-        title="Open AI Dispatch Assistant"
-        aria-label="Open AI Dispatch Assistant"
+        title="Open Dispatch Assistant"
+        aria-label="Open Dispatch Assistant"
       >
-        <BrainCircuit size={18} className="animate-pulse" />
+        <BrainCircuit size={18} className="animate-pulse motion-reduce:animate-none" />
       </button>
     );
   }
@@ -42,7 +42,7 @@ export function AIDispatchAssistant() {
     <div 
       className="fixed bottom-10 right-5 z-40 w-84 max-w-[90vw] overflow-hidden rounded border border-cyan-500/50 bg-eoc-panel shadow-tactical-accent flex flex-col font-mono text-xs"
       role="region"
-      aria-label="AI Dispatch Assistant"
+      aria-label="Automated Dispatch Assistant"
     >
       <div className="flex items-center justify-between border-b border-eoc-border bg-eoc-panel2 px-3 py-2">
         <div className="flex items-center gap-2">
@@ -51,10 +51,10 @@ export function AIDispatchAssistant() {
           </div>
           <div>
             <h3 className="font-display text-xs font-bold text-eoc-text flex items-center gap-1.5">
-              <span>AI Dispatch Engine</span>
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span>Automated Dispatch Assistant</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse motion-reduce:animate-none" />
             </h3>
-            <p className="text-[9px] text-cyan-400/80">INFERENCE MODEL v4.1 ACTIVE</p>
+            <p className="text-[9px] text-cyan-400/80">RULE-BASED HEURISTICS · ACTIVE</p>
           </div>
         </div>
         <button 
@@ -78,7 +78,7 @@ export function AIDispatchAssistant() {
               <div className="flex items-center gap-1.5 text-[9px] text-eoc-muted">
                 <span className="text-cyan-400">{msg.time}</span>
                 <span>·</span>
-                <span>NEURAL TRIAGE ADVICE</span>
+                <span>TRIAGE HEURISTIC ADVICE</span>
               </div>
               <div className="rounded border border-eoc-border bg-eoc-panel2 p-2.5 text-[11px] text-eoc-text shadow-sm relative overflow-hidden">
                 <div className="flex items-start gap-2">
@@ -102,7 +102,7 @@ export function AIDispatchAssistant() {
           className="w-full rounded border border-cyan-500/50 bg-cyan-950/80 py-1.5 text-[11px] font-bold text-cyan-300 hover:bg-cyan-900 transition-colors flex items-center justify-center gap-1.5 shadow-tactical-accent"
         >
           <Send size={12} />
-          <span>Launch FIFO Allocation Engine</span>
+          <span>Launch FIFO/FEFO Allocation Engine</span>
         </button>
       </div>
     </div>

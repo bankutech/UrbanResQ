@@ -23,11 +23,33 @@ dotenv.config();
 
 const app = express();
 
+// Trust reverse proxy for verified client IP resolution and rate-limiting
+app.set('trust proxy', 1);
+
 app.use(helmet());
 app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:5173', credentials: true }));
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '10mb' }));
 
-app.get('/api/health', (_req, res) => res.json({ status: 'ok', service: 'urbanresq-backend', time: new Date().toISOString() }));
+// Healthcheck with database connectivity verification
+app.get('/api/health', async (_req, res) => {
+  let dbStatus = 'disconnected';
+  try {
+    const { pool } = await import('./config/db');
+    await pool.query('SELECT 1');
+    dbStatus = 'connected';
+  } catch (err: any) {
+    dbStatus = `unreachable: ${err.message || 'connection failed'}`;
+  }
+
+  const isHealthy = dbStatus === 'connected';
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'healthy' : 'degraded',
+    service: 'urbanresq-backend',
+    database: dbStatus,
+    uptimeSeconds: Math.floor(process.uptime()),
+    time: new Date().toISOString()
+  });
+});
 
 app.use('/api/public', publicRoutes);
 app.use('/api/auth', authRoutes);
