@@ -23,3 +23,5 @@ scratch/
 test_sync.js
 test/screenshots/
 graphify-out/cache/
+.vercel
+.env*
