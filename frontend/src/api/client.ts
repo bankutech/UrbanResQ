@@ -17,8 +17,34 @@ api.interceptors.request.use((config) => {
 });
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // Detect when static hosting rewrote an API request to index.html (SPA catch-all)
+    if (
+      typeof res.data === 'string' &&
+      (res.data.includes('<!doctype') || res.data.includes('<html') || res.data.includes('<head'))
+    ) {
+      const url = res.config?.url || '';
+      const method = res.config?.method || 'get';
+      console.warn(`[UrbanResQ] Static host rewrite intercepted for ${url}. Serving simulated telemetry.`);
+      localStorage.setItem('urbanresq_simulated_mode', 'true');
+      const mockData = getMockResponseForUrl(url, method);
+      return {
+        ...res,
+        data: mockData,
+      };
+    }
+    return res;
+  },
   (err) => {
+    // Do not intercept legitimate request abortions
+    if (
+      err.name === 'CanceledError' || 
+      err.code === 'ERR_CANCELED' || 
+      err.message === 'canceled'
+    ) {
+      return Promise.reject(err);
+    }
+
     const url = err.config?.url || '';
     const method = err.config?.method || 'get';
     const status = err.response?.status;

@@ -61,7 +61,7 @@ export default function CommandCenterPage() {
 
   const resourceTypeNames: Record<number, string> = useMemo(() => {
     const map: Record<number, string> = {};
-    (resources || []).forEach((r: any) => { 
+    (Array.isArray(resources) ? resources : []).forEach((r: any) => { 
       map[r.resource_type_id] = r.resource_type_name; 
     });
     return map;
@@ -108,7 +108,7 @@ export default function CommandCenterPage() {
         })
       );
     }
-    if (teams) {
+    if (Array.isArray(teams)) {
       teams.forEach((t: any) => 
         t.latitude && list.push({ 
           id: `team-${t.team_id}`, 
@@ -120,7 +120,7 @@ export default function CommandCenterPage() {
         })
       );
     }
-    if (hospitals) {
+    if (Array.isArray(hospitals)) {
       hospitals.forEach((h: any) => 
         h.latitude && list.push({ 
           id: `hosp-${h.hospital_id}`, 
@@ -132,7 +132,7 @@ export default function CommandCenterPage() {
         })
       );
     }
-    if (shelters) {
+    if (Array.isArray(shelters)) {
       shelters.forEach((s: any) => 
         s.latitude && list.push({ 
           id: `shelter-${s.shelter_id}`, 

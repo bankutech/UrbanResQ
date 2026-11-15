@@ -76,11 +76,11 @@ export default function DashboardPage() {
   if (error) return <ErrorState message={error} onRetry={reload} />;
 
   const status = data?.status || {};
-  const trend = (data?.trend || []).map((t: any) => ({ ...t, request_count: Number(t.request_count) }));
-  const severity = (data?.severity || []).map((s: any) => ({ ...s, disaster_count: Number(s.disaster_count) }));
-  const disasters = data?.disasters || [];
-  const utilization = (data?.utilization || []).map((u: any) => ({ ...u, utilization_pct: Number(u.utilization_pct) }));
-  const activity = data?.activity || [];
+  const trend = (Array.isArray(data?.trend) ? data.trend : []).map((t: any) => ({ ...t, request_count: Number(t.request_count) }));
+  const severity = (Array.isArray(data?.severity) ? data.severity : []).map((s: any) => ({ ...s, disaster_count: Number(s.disaster_count) }));
+  const disasters = Array.isArray(data?.disasters) ? data.disasters : [];
+  const utilization = (Array.isArray(data?.utilization) ? data.utilization : []).map((u: any) => ({ ...u, utilization_pct: Number(u.utilization_pct) }));
+  const activity = Array.isArray(data?.activity) ? data.activity : [];
 
   return (
     <div className="space-y-4 font-sans">
